@@ -5,6 +5,9 @@ Globals globals = {};
 
 int main() {
     globals.window = new Window(1200, 800, "Chess3D");
+    globals.renderer = new Renderer();
+    globals.io = new IO();
+
     if (!globals.window->Initialize()) {
         return -1;
     }
@@ -16,4 +19,8 @@ int main() {
     }
 
     globals.window->Close();
+
+    delete globals.io;
+    delete globals.renderer;
+    delete globals.window;
 }
