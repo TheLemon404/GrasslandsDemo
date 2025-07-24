@@ -7,6 +7,7 @@ add_subdirectory(submodules/glfw)
 add_subdirectory(submodules/quil)
 
 file(GLOB_RECURSE src CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
-add_executable(Chess3D ${src})
+add_executable(Chess3D ${src} external/glad/src/glad.c)
+target_include_directories(Chess3D PRIVATE external/glad/include)
 
 target_link_libraries(Chess3D PRIVATE QuIL glfw)
