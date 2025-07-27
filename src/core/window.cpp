@@ -3,6 +3,7 @@
 #include <iostream>
 #include <quil.h>
 
+#include "../globals.hpp"
 #include "glad/glad.h"
 
 Window::Window(unsigned int width, unsigned int height, const char* title) {
@@ -20,20 +21,18 @@ bool Window::Initialize() {
     glfwWindow = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
     if (!glfwWindow) {
-        std::cout << "failed to create flfw window" << std::endl;
         glfwTerminate();
-        return false;
+        globals.logger->ThrowRuntimeError("failed to create glfw window");
     }
 
     glfwMakeContextCurrent(glfwWindow);
     quilCreateWindowContext(glfwWindow);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "failed to load glad" << std::endl;
-        return false;
+        globals.logger->ThrowRuntimeError("failed to load glad");
     }
 
-    std::cout << "window successfully initialized" << std::endl;
+    globals.logger->Log("window successfully initialized");
     return true;
 }
 

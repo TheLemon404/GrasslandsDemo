@@ -1,18 +1,19 @@
 #pragma once
+#include <string>
 
-struct Shader {
-    const char* vertexShaderSource;
-    const char* fragmentShaderSource;
+#include "objects/multimesh.hpp"
+#include "objects/shader.hpp"
 
-    unsigned int vertexShaderId;
-    unsigned int fragmentShaderId;
-    unsigned int programId;
-};
-
-struct Renderer {
-private:
-    Shader CreateShader(const char* vertexShaderLocalPath, const char* fragmentShaderLocalPath);
+class Renderer {
+    Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath);
+    void DeleteShader(Shader& shader);
     void LoadShaders();
 
+    Shader meshLitShader;
+
+public:
+    static Multimesh LoadMeshAsset(std::string meshAssetPath);
+
     void Initialize();
+    void CleanUp();
 };
