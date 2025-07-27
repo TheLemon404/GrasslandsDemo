@@ -76,9 +76,9 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
             // per-face material
             shapes[s].mesh.material_ids[f];
         }
-
-        return {meshes};
     }
+
+    return {meshes};
 }
 
 Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath) {
