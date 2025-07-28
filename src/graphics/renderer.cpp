@@ -12,6 +12,7 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &mesh.vao);
+    glBindVertexArray(mesh.vao);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 }
@@ -146,6 +147,9 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
         globals.logger.ThrowRuntimeError(programInfoLog);
     }
 
+    globals.logger.Log("successfully compiled vertex shader: " + std::string(vertexShaderContent));
+    globals.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderContent));
+
     return {
         vertexShaderContent,
         fragmentShaderContent,
@@ -170,9 +174,12 @@ void Renderer::Initialize() {
 void Renderer::DrawActiveScene() {
     for (Multimesh& multimesh : globals.scene.meshes) {
         for (Mesh& mesh : multimesh.meshes) {
+            globals.logger.Log(mesh.vertices.size());
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
+            glUseProgram(meshLitShader.programId);
             glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size());
+            glUseProgram(0);
             glDisableVertexAttribArray(0);
             glBindVertexArray(0);
         }

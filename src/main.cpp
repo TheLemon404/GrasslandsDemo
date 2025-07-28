@@ -26,4 +26,6 @@ int main() {
 
     globals.renderer.CleanUp();
     globals.window.Close();
+
+    return 0;
 }

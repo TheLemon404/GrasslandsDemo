@@ -11,9 +11,8 @@ class Renderer {
 
     Shader meshLitShader;
 
-    static void CreateMeshBuffers(Mesh& mesh);
-
 public:
+    static void CreateMeshBuffers(Mesh& mesh);
     static Multimesh LoadMeshAsset(std::string meshAssetPath);
 
     void Initialize();
