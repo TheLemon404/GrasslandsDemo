@@ -72,9 +72,6 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
             for (size_t v = 0; v < fv; v++) {
                 // access to vertex
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                meshes[s].indices.push_back(3*size_t(idx.vertex_index)+0);
-                meshes[s].indices.push_back(3*size_t(idx.vertex_index)+1);
-                meshes[s].indices.push_back(3*size_t(idx.vertex_index)+2);
 
                 tinyobj::real_t vx = attrib.vertices[3*size_t(idx.vertex_index)+0];
                 tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
@@ -108,6 +105,11 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
                 // tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
             }
             index_offset += fv;
+
+            for (int i = 0; i < shapes[s].mesh.indices.size(); i++) {
+                tinyobj::index_t idx = shapes[s].mesh.indices[i];
+                meshes[s].indices.push_back(i);
+            }
 
             // per-face material
             shapes[s].mesh.material_ids[f];
