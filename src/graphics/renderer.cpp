@@ -14,6 +14,10 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glGenVertexArrays(1, &mesh.vao);
     glBindVertexArray(mesh.vao);
 
+    glGenBuffers(1, &mesh.ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
+
     glGenBuffers(1, &mesh.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
     glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
@@ -68,6 +72,10 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
             for (size_t v = 0; v < fv; v++) {
                 // access to vertex
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+                meshes[s].indices.push_back(3*size_t(idx.vertex_index)+0);
+                meshes[s].indices.push_back(3*size_t(idx.vertex_index)+1);
+                meshes[s].indices.push_back(3*size_t(idx.vertex_index)+2);
+
                 tinyobj::real_t vx = attrib.vertices[3*size_t(idx.vertex_index)+0];
                 tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
                 tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
@@ -264,7 +272,7 @@ void Renderer::DrawActiveScene() {
             UploadMesh3DMatrices(mesh, multimesh.transform);
             UploadMaterialUniforms(mesh);
 
-            glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size());
+            glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
             glUseProgram(0);
             glDisableVertexAttribArray(0);
