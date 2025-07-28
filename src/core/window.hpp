@@ -8,8 +8,7 @@ struct Window {
     const char* title;
     GLFWwindow* glfwWindow;
 
-    Window(unsigned int width, unsigned int height, const char* title);
-    bool Initialize();
+    bool Initialize(unsigned int width, unsigned int height, const char* title);
     bool ShouldClose();
     void RefreshAndPoll();
     void Close();

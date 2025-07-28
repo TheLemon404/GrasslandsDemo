@@ -11,9 +11,12 @@ class Renderer {
 
     Shader meshLitShader;
 
+    static void CreateMeshBuffers(Mesh& mesh);
+
 public:
     static Multimesh LoadMeshAsset(std::string meshAssetPath);
 
     void Initialize();
+    void DrawActiveScene();
     void CleanUp();
 };

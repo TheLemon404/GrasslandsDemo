@@ -2,24 +2,35 @@
 #include "tiny_obj_loader.h"
 #include <cassert>
 #include <iostream>
+#include <regex>
 #include <glad/glad.h>
 #include "../globals.hpp"
 
+void Renderer::CreateMeshBuffers(Mesh& mesh) {
+    glGenBuffers(1, &mesh.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &mesh.vao);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+}
+
 Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = "./"; // Path to material files
+    reader_config.mtl_search_path = std::regex_replace(meshAssetPath, std::regex(".obj\n"), ".mtl");
 
     tinyobj::ObjReader reader;
 
     if (!reader.ParseFromFile(meshAssetPath.c_str(), reader_config)) {
         if (!reader.Error().empty()) {
-            globals.logger->ThrowRuntimeError("TinyObjReader: " + reader.Error());
+            globals.logger.ThrowRuntimeError("TinyObjReader: " + reader.Error());
         }
         exit(1);
     }
 
     if (!reader.Warning().empty()) {
-        globals.logger->Log("TinyObjReader: " + reader.Warning());
+        globals.logger.Log("TinyObjReader: " + reader.Warning());
     }
 
     auto& attrib = reader.GetAttrib();
@@ -78,12 +89,17 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
         }
     }
 
+    for (Mesh& mesh : meshes) {
+        CreateMeshBuffers(mesh);
+    }
+
+    globals.logger.Log("successfully loaded obj file: " + meshAssetPath);
     return {meshes};
 }
 
 Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath) {
-    const char* vertexShaderContent = globals.io->LoadShaderFileContents(vertexShaderLocalPath.c_str());
-    const char* fragmentShaderContent = globals.io->LoadShaderFileContents(fragmentShaderLocalPath.c_str());
+    const char* vertexShaderContent = globals.io.LoadShaderFileContents(vertexShaderLocalPath.c_str());
+    const char* fragmentShaderContent = globals.io.LoadShaderFileContents(fragmentShaderLocalPath.c_str());
 
     unsigned int vertexShaderId = 0, fragmentShaderId = 0, programId = 0;
 
@@ -97,7 +113,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     if(!vertexSuccess) {
         glGetShaderInfoLog(vertexShaderId, 512, nullptr, vertexInfoLog);
-        globals.logger->ThrowRuntimeError(vertexInfoLog);
+        globals.logger.ThrowRuntimeError(vertexInfoLog);
     }
 
     //fragment shader compilationg
@@ -110,7 +126,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     if(!fragmentSuccess) {
         glGetShaderInfoLog(fragmentShaderId, 512, nullptr, fragmentInfoLog);
-        globals.logger->ThrowRuntimeError(fragmentInfoLog);
+        globals.logger.ThrowRuntimeError(fragmentInfoLog);
     }
 
     programId = glCreateProgram();
@@ -127,7 +143,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
     glGetProgramiv(programId, GL_LINK_STATUS, &programSuccess);
     if(!programSuccess) {
         glGetProgramInfoLog(programId, 512, nullptr, programInfoLog);
-        globals.logger->ThrowRuntimeError(programInfoLog);
+        globals.logger.ThrowRuntimeError(programInfoLog);
     }
 
     return {
@@ -149,6 +165,18 @@ void Renderer::LoadShaders() {
 
 void Renderer::Initialize() {
     LoadShaders();
+}
+
+void Renderer::DrawActiveScene() {
+    for (Multimesh& multimesh : globals.scene.meshes) {
+        for (Mesh& mesh : multimesh.meshes) {
+            glBindVertexArray(mesh.vao);
+            glEnableVertexAttribArray(0);
+            glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size());
+            glDisableVertexAttribArray(0);
+            glBindVertexArray(0);
+        }
+    }
 }
 
 void Renderer::CleanUp() {

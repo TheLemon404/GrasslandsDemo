@@ -6,13 +6,11 @@
 #include "../globals.hpp"
 #include "glad/glad.h"
 
-Window::Window(unsigned int width, unsigned int height, const char* title) {
+bool Window::Initialize(unsigned int width, unsigned int height, const char* title) {
     this->width = width;
     this->height = height;
     this->title = title;
-}
 
-bool Window::Initialize() {
     if (!glfwInit()) {
         std::cout << "failed to initialize glfw" << std::endl;
         return false;
@@ -22,17 +20,17 @@ bool Window::Initialize() {
 
     if (!glfwWindow) {
         glfwTerminate();
-        globals.logger->ThrowRuntimeError("failed to create glfw window");
+        globals.logger.ThrowRuntimeError("failed to create glfw window");
     }
 
     glfwMakeContextCurrent(glfwWindow);
     quilCreateWindowContext(glfwWindow);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        globals.logger->ThrowRuntimeError("failed to load glad");
+        globals.logger.ThrowRuntimeError("failed to load glad");
     }
 
-    globals.logger->Log("window successfully initialized");
+    globals.logger.Log("window successfully initialized");
     return true;
 }
 
