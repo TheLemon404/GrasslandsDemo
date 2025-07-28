@@ -1,6 +1,6 @@
 #pragma once
 #include "../graphics/renderer.hpp"
-#include "../graphics/objects/multimesh.hpp"
+#include "../graphics/structures/multimesh.hpp"
 
 struct Scene {
     std::vector<Multimesh> meshes;

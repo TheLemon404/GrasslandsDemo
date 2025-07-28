@@ -4,5 +4,5 @@
 struct Material {
     unsigned int shaderProgramId;
 
-    void Set(const char* variable, const void* value);
+    glm::vec3 albedo = glm::vec3(1.0f, 1.0f, 1.0f);
 };

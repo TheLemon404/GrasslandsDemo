@@ -5,6 +5,10 @@
 #include <regex>
 #include <glad/glad.h>
 #include "../globals.hpp"
+#include "glm.hpp"
+#include "ext/matrix_clip_space.hpp"
+#include "ext/matrix_transform.hpp"
+#include "gtc/type_ptr.inl"
 
 void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glGenBuffers(1, &mesh.vbo);
@@ -92,10 +96,11 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
 
     for (Mesh& mesh : meshes) {
         CreateMeshBuffers(mesh);
+        mesh.material.shaderProgramId = globals.renderer.meshLitShader.programId;
     }
 
     globals.logger.Log("successfully loaded obj file: " + meshAssetPath);
-    return {meshes};
+    return {.meshes = meshes};
 }
 
 Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath) {
@@ -147,8 +152,8 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
         globals.logger.ThrowRuntimeError(programInfoLog);
     }
 
-    globals.logger.Log("successfully compiled vertex shader: " + std::string(vertexShaderContent));
-    globals.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderContent));
+    globals.logger.Log("successfully compiled vertex shader: " + std::string(vertexShaderLocalPath));
+    globals.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderLocalPath));
 
     return {
         vertexShaderContent,
@@ -159,26 +164,94 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
     };
 }
 
+void Renderer::UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
+}
+
+void Renderer::UploadShaderUniformVec4(unsigned int programId, std::string uniformName, glm::vec4 vector) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniform4fv(location, 1, glm::value_ptr(vector));
+}
+
+void Renderer::UploadShaderUniformVec3(unsigned int programId, std::string uniformName, glm::vec3 vector) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniform3fv(location, 1, glm::value_ptr(vector));
+}
+
+void Renderer::UploadShaderUniformVec2(unsigned int programId, std::string uniformName, glm::vec2 vector) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniform2fv(location, 1, glm::value_ptr(vector));
+}
+
+void Renderer::UploadShaderUniformFloat(unsigned int programId, std::string uniformName, float value) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniform1f(location, value);
+}
+
+void Renderer::UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniform1i(location, value);
+}
+
 void Renderer::DeleteShader(Shader& shader) {
     glDeleteProgram(shader.programId);
 }
 
 void Renderer::LoadShaders() {
-    meshLitShader = CreateShader("resources/shaders/mesh_lit.vert", "resources/shaders/mesh_lit.frag");
+    meshLitShader = Renderer::CreateShader("resources/shaders/mesh_lit.vert", "resources/shaders/mesh_lit.frag");
+}
+
+void Renderer::UpdateCameraMatrices() {
+    camera.projection = glm::identity<glm::mat4>();
+    camera.projection = glm::perspective<float>(camera.fov, (float)globals.window.width / (float)globals.window.height, camera.near, camera.far);
+
+    camera.view = glm::identity<glm::mat4>();
+    camera.view = glm::lookAt(camera.position, camera.target, camera.up);
+}
+
+void Renderer::UpdateMultimeshMatrices(Multimesh &multimesh) {
+    multimesh.transform = glm::identity<glm::mat4>();
+    multimesh.transform = glm::scale(multimesh.transform, multimesh.scale);
+    multimesh.transform = glm::rotate(multimesh.transform, multimesh.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    multimesh.transform = glm::rotate(multimesh.transform, multimesh.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    multimesh.transform = glm::rotate(multimesh.transform, multimesh.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    multimesh.transform = glm::translate(multimesh.transform, multimesh.position);
+}
+
+void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform) {
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transform", transform);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", camera.view);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", camera.projection);
+}
+
+void Renderer::UploadMaterialUniforms(Mesh &mesh) {
+    UploadShaderUniformVec3(mesh.material.shaderProgramId, "albedo", mesh.material.albedo);
 }
 
 void Renderer::Initialize() {
     LoadShaders();
+
+    UpdateCameraMatrices();
 }
 
 void Renderer::DrawActiveScene() {
+    UpdateCameraMatrices();
+
     for (Multimesh& multimesh : globals.scene.meshes) {
+        UpdateMultimeshMatrices(multimesh);
+
+        glEnable(GL_DEPTH_TEST);
         for (Mesh& mesh : multimesh.meshes) {
-            globals.logger.Log(mesh.vertices.size());
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
-            glUseProgram(meshLitShader.programId);
+            glUseProgram(mesh.material.shaderProgramId);
+
+            UploadMesh3DMatrices(mesh, multimesh.transform);
+            UploadMaterialUniforms(mesh);
+
             glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size());
+
             glUseProgram(0);
             glDisableVertexAttribArray(0);
             glBindVertexArray(0);

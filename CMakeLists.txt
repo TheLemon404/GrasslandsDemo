@@ -6,15 +6,15 @@ set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(submodules/glfw)
 add_subdirectory(submodules/quil)
 add_subdirectory(submodules/tinyobjloader)
+add_subdirectory(submodules/glm)
 
 file(GLOB_RECURSE src CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
 add_executable(Chess3D ${src}
         external/glad/src/glad.c
-        src/gameplay/scene.hpp
 )
 
-target_include_directories(Chess3D PRIVATE external/glad/include)
+target_include_directories(Chess3D PRIVATE external/glad/include submodules/glm/glm)
 
-target_link_libraries(Chess3D PRIVATE QuIL glfw tinyobjloader)
+target_link_libraries(Chess3D PRIVATE QuIL glfw tinyobjloader glm)
 
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})

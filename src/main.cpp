@@ -12,6 +12,7 @@ int main() {
     if (!globals.window.Initialize(1200, 800, "Chess3D")) {
         return -1;
     }
+    globals.renderer.Initialize();
 
     globals.scene = GameScene();
 
