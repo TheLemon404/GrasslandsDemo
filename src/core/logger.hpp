@@ -1,7 +1,8 @@
 #pragma once
 #include <string>
 
-struct Logger {
+class Logger {
+public:
     void Log(std::string message);
     void Log(float message);
     void ThrowRuntimeError(std::string message);

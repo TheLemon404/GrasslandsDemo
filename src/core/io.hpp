@@ -1,5 +1,6 @@
 #pragma once
 
-struct IO {
+class IO {
+public:
     const char* LoadShaderFileContents(const char* localPath);
 };

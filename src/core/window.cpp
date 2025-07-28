@@ -24,6 +24,7 @@ bool Window::Initialize(unsigned int width, unsigned int height, const char* tit
     }
 
     glfwMakeContextCurrent(glfwWindow);
+    glfwSetWindowSizeCallback(glfwWindow, OnResize);
     quilCreateWindowContext(glfwWindow);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -46,4 +47,9 @@ void Window::RefreshAndPoll() {
 
 void Window::Close() {
     glfwTerminate();
+}
+
+void Window::OnResize(GLFWwindow *window, int width, int height) {
+    globals.window.width = width;
+    globals.window.height = height;
 }

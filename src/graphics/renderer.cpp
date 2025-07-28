@@ -264,6 +264,7 @@ void Renderer::DrawActiveScene() {
         UpdateMultimeshMatrices(multimesh);
 
         glEnable(GL_DEPTH_TEST);
+        glViewport(0, 0, globals.window.width, globals.window.height);
         for (Mesh& mesh : multimesh.meshes) {
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
