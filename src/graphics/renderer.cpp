@@ -11,14 +11,26 @@
 #include "gtc/type_ptr.inl"
 
 void Renderer::CreateMeshBuffers(Mesh& mesh) {
+    glGenVertexArrays(1, &mesh.vao);
+    glBindVertexArray(mesh.vao);
+
     glGenBuffers(1, &mesh.vbo);
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
     glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
-
-    glGenVertexArrays(1, &mesh.vao);
-    glBindVertexArray(mesh.vao);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glGenBuffers(1, &mesh.nbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.nbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh.normals.size() * sizeof(float), mesh.normals.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+
+    glGenBuffers(1, &mesh.uvbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.uvbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh.uvs.size() * sizeof(float), mesh.uvs.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
 }
 
 Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
@@ -245,6 +257,8 @@ void Renderer::DrawActiveScene() {
         for (Mesh& mesh : multimesh.meshes) {
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
             glUseProgram(mesh.material.shaderProgramId);
 
             UploadMesh3DMatrices(mesh, multimesh.transform);
@@ -254,6 +268,8 @@ void Renderer::DrawActiveScene() {
 
             glUseProgram(0);
             glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
             glBindVertexArray(0);
         }
     }

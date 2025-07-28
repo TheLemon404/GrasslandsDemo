@@ -3,7 +3,7 @@
 
 struct Mesh {
     Material material;
-    unsigned int vao, vbo, ibo;
+    unsigned int vao, vbo, nbo, uvbo, ibo;
 
     std::vector<float> vertices;
     std::vector<float> normals;
