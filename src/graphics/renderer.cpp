@@ -220,8 +220,66 @@ void Renderer::DeleteShader(Shader& shader) {
     glDeleteProgram(shader.programId);
 }
 
+Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height) {
+    Framebuffer framebuffer = {
+        .colorTexture = {
+            .width = width,
+            .height = height},
+        .normalTexture = {
+            .width = width,
+            .height = height
+        },
+        .positionTexture = {
+            .width = width,
+            .height = height
+        },
+        .depthStencilRenderbuffer = {
+            .width = width,
+            .height = height}
+    };
+
+    glGenFramebuffers(1, &framebuffer.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
+
+    glGenTextures(1, &framebuffer.colorTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.colorTexture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, framebuffer.colorTexture.id, 0);
+
+    glGenTextures(1, &framebuffer.normalTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.normalTexture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, framebuffer.normalTexture.id, 0);
+
+    glGenTextures(1, &framebuffer.positionTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.positionTexture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, framebuffer.positionTexture.id, 0);
+
+    glGenRenderbuffers(1, &framebuffer.depthStencilRenderbuffer.id);
+    glBindRenderbuffer(GL_TEXTURE_2D, framebuffer.depthStencilRenderbuffer.id);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer.depthStencilRenderbuffer.id);
+
+    const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+    glDrawBuffers(3, drawBuffers);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        globals.logger.ThrowRuntimeError("failed to create framebuffer");
+    }
+
+    return framebuffer;
+}
+
 void Renderer::LoadShaders() {
-    meshLitShader = Renderer::CreateShader("resources/shaders/mesh_lit.vert", "resources/shaders/mesh_lit.frag");
+    meshLitShader = CreateShader("resources/shaders/mesh_lit.vert", "resources/shaders/mesh_lit.frag");
+    prepassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
 }
 
 void Renderer::UpdateCameraMatrices() {
@@ -254,14 +312,24 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
 void Renderer::Initialize() {
     LoadShaders();
 
+    framebuffer = CreateFramebuffer(globals.window.width, globals.window.height);
+
     UpdateCameraMatrices();
 }
 
 void Renderer::DrawActiveScene() {
     UpdateCameraMatrices();
 
+    //first pass
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
+    glViewport(0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
-    glViewport(0, 0, globals.window.width, globals.window.height);
 
     for (Multimesh& multimesh : globals.scene.meshes) {
         UpdateMultimeshMatrices(multimesh);
@@ -285,6 +353,29 @@ void Renderer::DrawActiveScene() {
             glBindVertexArray(0);
         }
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //second pass
+    glViewport(0, 0, globals.window.width, globals.window.height);
+    glDisable(GL_DEPTH_TEST);
+    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glUseProgram(prepassShader.programId);
+    glUniform1i(glGetUniformLocation(prepassShader.programId, "colorTexture"), 0);
+    glUniform1i(glGetUniformLocation(prepassShader.programId, "normalTexture"), 1);
+    glUniform1i(glGetUniformLocation(prepassShader.programId, "positionTexture"), 2);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.colorTexture.id);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.normalTexture.id);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.positionTexture.id);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glUseProgram(0);
+
 }
 
 void Renderer::CleanUp() {

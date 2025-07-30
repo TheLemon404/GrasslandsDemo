@@ -6,9 +6,13 @@ layout (location = 2) in vec2 pUV;
 
 uniform vec3 albedo;
 
-out vec4 FragColor;
+layout (location = 0) out vec4 color;
+layout (location = 1) out vec4 normal;
+layout (location = 2) out vec4 position;
 
 void main()
 {
-    FragColor = vec4(pNormal, 1.0f);
+    color = vec4(albedo, 1.0f);
+    normal = vec4(pNormal, 1.0f);
+    position = vec4(pPosition, 1.0f);
 }

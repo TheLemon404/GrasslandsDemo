@@ -2,6 +2,7 @@
 #include <string>
 
 #include "structures/camera.hpp"
+#include "structures/framebuffer.hpp"
 #include "structures/multimesh.hpp"
 #include "structures/shader.hpp"
 
@@ -16,8 +17,11 @@ class Renderer {
 
     Camera camera;
 
+    Framebuffer framebuffer;
+
 public:
     Shader meshLitShader;
+    Shader prepassShader;
 
     static Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath);
     static void UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix);
@@ -29,6 +33,8 @@ public:
 
     static void CreateMeshBuffers(Mesh& mesh);
     static Multimesh LoadMeshAsset(std::string meshAssetPath);
+
+    static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
 
     void Initialize();
     void DrawActiveScene();
