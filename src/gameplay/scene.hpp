@@ -11,5 +11,7 @@ struct Scene {
 struct GameScene : Scene {
     GameScene() {
         meshes.push_back(Renderer::LoadMeshAsset("resources/meshes/box.obj"));
+        meshes[0].meshes[0].material.specular = 0.0f;
+        meshes[0].meshes[0].material.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
     }
 };

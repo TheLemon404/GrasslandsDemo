@@ -20,12 +20,12 @@ void main() {
     vec3 color = texture(colorTexture, pUV).rgb;
     vec3 specular = texture(specularTexture, pUV).rgb;
 
-    vec3 lighting = color * ambientColor;
     vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.0f) * sunColor;
     vec3 viewDirection = normalize(cameraPosition - position);
-    vec3 reflectDirection = reflect(-sunDirection, normal);
+    vec3 reflectDirection = reflect(normalize(sunDirection), normal);
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
     vec3 finalSpecular = specular * spec * sunColor;
-    lighting += diffuse + finalSpecular;
-    fragColor = vec4(lighting, 1.0f);
+
+    vec3 lighting = (ambientColor + diffuse + finalSpecular) * color;
+    fragColor = vec4(lighting, 0.0f);
 }
