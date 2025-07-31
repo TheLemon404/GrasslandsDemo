@@ -21,6 +21,7 @@ void main() {
     vec3 specular = texture(specularTexture, pUV).rgb;
 
     vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.0f) * sunColor;
+
     vec3 viewDirection = normalize(cameraPosition - position);
     vec3 reflectDirection = reflect(normalize(sunDirection), normal);
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
