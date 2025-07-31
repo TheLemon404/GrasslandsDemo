@@ -14,6 +14,7 @@ add_executable(Chess3D ${src}
         src/graphics/structures/framebuffer.hpp
         src/graphics/structures/texture.hpp
         src/graphics/structures/renderbuffer.hpp
+        src/gameplay/structures/environment.hpp
 )
 
 target_include_directories(Chess3D PRIVATE external/glad/include submodules/glm/glm)

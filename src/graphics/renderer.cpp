@@ -233,6 +233,10 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
             .width = width,
             .height = height
         },
+        .specularTexture = {
+            .width = width,
+            .height = height
+        },
         .depthStencilRenderbuffer = {
             .width = width,
             .height = height}
@@ -262,13 +266,20 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, framebuffer.positionTexture.id, 0);
 
+    glGenTextures(1, &framebuffer.specularTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.specularTexture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, framebuffer.specularTexture.id, 0);
+
     glGenRenderbuffers(1, &framebuffer.depthStencilRenderbuffer.id);
     glBindRenderbuffer(GL_TEXTURE_2D, framebuffer.depthStencilRenderbuffer.id);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer.depthStencilRenderbuffer.id);
 
-    const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(3, drawBuffers);
+    const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(4, drawBuffers);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         globals.logger.ThrowRuntimeError("failed to create framebuffer");
@@ -307,6 +318,7 @@ void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform) {
 
 void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shaderProgramId, "albedo", mesh.material.albedo);
+    UploadShaderUniformFloat(mesh.material.shaderProgramId, "specular", mesh.material.specular);
 }
 
 void Renderer::Initialize() {
@@ -324,7 +336,7 @@ void Renderer::DrawActiveScene() {
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
     glViewport(0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
@@ -361,10 +373,12 @@ void Renderer::DrawActiveScene() {
     glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    //upload framebuffer textures
     glUseProgram(prepassShader.programId);
     glUniform1i(glGetUniformLocation(prepassShader.programId, "colorTexture"), 0);
     glUniform1i(glGetUniformLocation(prepassShader.programId, "normalTexture"), 1);
     glUniform1i(glGetUniformLocation(prepassShader.programId, "positionTexture"), 2);
+    glUniform1i(glGetUniformLocation(prepassShader.programId, "specularTexture"), 3);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, framebuffer.colorTexture.id);
@@ -372,10 +386,17 @@ void Renderer::DrawActiveScene() {
     glBindTexture(GL_TEXTURE_2D, framebuffer.normalTexture.id);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, framebuffer.positionTexture.id);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.specularTexture.id);
+
+    //upload environment data
+    UploadShaderUniformVec3(prepassShader.programId, "sunDirection", globals.scene.environment.sunDirection);
+    UploadShaderUniformVec3(prepassShader.programId, "sunColor", globals.scene.environment.sunColor);
+    UploadShaderUniformVec3(prepassShader.programId, "ambientColor", globals.scene.environment.ambientColor);
+    UploadShaderUniformVec3(prepassShader.programId, "cameraPosition", camera.position);
 
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glUseProgram(0);
-
 }
 
 void Renderer::CleanUp() {

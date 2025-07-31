@@ -14,7 +14,7 @@ layout (location = 2) out vec2 pUV;
 void main()
 {
     gl_Position = projection * view * transform * vec4(aPosition, 1.0f);
-    pNormal = aNormal;
+    pNormal = (transform * vec4(aNormal, 1.0f)).xyz;
     pUV = aUV;
     pPosition = (transform * vec4(aPosition, 1.0f)).xyz;
 }
