@@ -8,6 +8,7 @@ int main() {
     globals.renderer = Renderer();
     globals.io = IO();
     globals.logger = Logger();
+    globals.clock = Clock();
 
     if (!globals.window.Initialize(1200, 800, "Chess3D")) {
         return -1;
@@ -17,7 +18,9 @@ int main() {
     globals.scene = GameScene();
 
     while (!globals.window.ShouldClose()) {
-        globals.scene.meshes[0].rotation += glm::vec3(0.0f, 0.001f, 0.0f);
+        globals.clock.Tick();
+
+        globals.scene.meshes[0].rotation += glm::vec3(0.0f, 1.0f * globals.clock.deltaTime, 0.0f);
 
         globals.renderer.DrawActiveScene();
 

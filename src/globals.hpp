@@ -1,4 +1,5 @@
 #pragma once
+#include "core/clock.hpp"
 #include "core/io.hpp"
 #include "core/logger.hpp"
 #include "core/window.hpp"
@@ -10,6 +11,7 @@ struct Globals {
     Renderer renderer;
     IO io;
     Logger logger;
+    Clock clock;
 
     Scene scene;
 };
