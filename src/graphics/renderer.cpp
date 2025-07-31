@@ -125,6 +125,18 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
     return {.meshes = meshes};
 }
 
+void Renderer::RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin) {
+    // Create the transformation matrix
+    glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), -origin);
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angle, axis);
+    glm::mat4 inverseTranslationMatrix = glm::translate(glm::mat4(1.0f), origin);
+    glm::mat4 finalTransformation = inverseTranslationMatrix * rotationMatrix * translationMatrix;
+
+    // Apply the transformation to a point
+    glm::vec4 originalPoint = glm::vec4(camera.position, 1.0f); // Assuming the object's origin
+    camera.position = finalTransformation * originalPoint;
+}
+
 Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath) {
     const char* vertexShaderContent = globals.io.LoadShaderFileContents(vertexShaderLocalPath.c_str());
     const char* fragmentShaderContent = globals.io.LoadShaderFileContents(fragmentShaderLocalPath.c_str());
@@ -319,6 +331,14 @@ void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform) {
 void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shaderProgramId, "albedo", mesh.material.albedo);
     UploadShaderUniformFloat(mesh.material.shaderProgramId, "specular", mesh.material.specular);
+    if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "haseBaseTexture", 0);
+    }
+    else {
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "haseBaseTexture", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, mesh.material.texture.id);
+    }
 }
 
 void Renderer::Initialize() {

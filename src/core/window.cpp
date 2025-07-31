@@ -25,6 +25,7 @@ bool Window::Initialize(unsigned int width, unsigned int height, const char* tit
 
     glfwMakeContextCurrent(glfwWindow);
     glfwSetWindowSizeCallback(glfwWindow, OnResize);
+    glfwSetCursorPosCallback(glfwWindow, OnMouseMove);
     quilCreateWindowContext(glfwWindow);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -40,6 +41,8 @@ bool Window::ShouldClose() {
 }
 
 void Window::RefreshAndPoll() {
+    mouseProperties.mousePositionLast = mouseProperties.mousePosition;
+
     glfwPollEvents();
     quilPollCallbacks();
     glfwSwapBuffers(glfwWindow);
@@ -53,3 +56,9 @@ void Window::OnResize(GLFWwindow *window, int width, int height) {
     globals.window.width = width;
     globals.window.height = height;
 }
+
+void Window::OnMouseMove(GLFWwindow *window, double x, double y) {
+    globals.window.mouseProperties.mousePositionLast = globals.window.mouseProperties.mousePosition;
+    globals.window.mouseProperties.mousePosition = glm::vec2(x, y);
+}
+

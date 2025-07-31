@@ -11,6 +11,7 @@ add_subdirectory(submodules/glm)
 file(GLOB_RECURSE src CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
 add_executable(Chess3D ${src}
         external/glad/src/glad.c
+        src/gameplay/structures/settings.hpp
 )
 
 target_include_directories(Chess3D PRIVATE external/glad/include submodules/glm/glm)

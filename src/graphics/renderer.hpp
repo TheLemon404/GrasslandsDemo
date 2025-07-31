@@ -15,13 +15,15 @@ class Renderer {
     void UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform);
     void UploadMaterialUniforms(Mesh& mesh);
 
-    Camera camera;
-
     Framebuffer framebuffer;
 
 public:
     Shader meshLitShader;
     Shader prepassShader;
+
+    Camera camera;
+
+    void RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin);
 
     static Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath);
     static void UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix);
