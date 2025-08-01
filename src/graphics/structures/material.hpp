@@ -1,5 +1,6 @@
 #pragma once
-#include "shader.hpp"
+#include "texture.hpp"
+#include "glm.hpp"
 
 struct Material {
     unsigned int shaderProgramId;

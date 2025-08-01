@@ -1,7 +1,6 @@
 #include "renderer.hpp"
 #include "tiny_obj_loader.h"
 #include <cassert>
-#include <iostream>
 #include <regex>
 #include <glad/glad.h>
 #include "../globals.hpp"
@@ -37,7 +36,69 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glEnableVertexAttribArray(2);
 }
 
-Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
+Mesh Renderer::LoadMeshSubAsset(std::string meshAssetPath, int subMeshIndex, tinyobj::ObjReader& reader) {
+    auto& attrib = reader.GetAttrib();
+    auto& shapes = reader.GetShapes();
+    auto& materials = reader.GetMaterials();
+
+    Mesh result = {};
+
+    // Loop over faces(polygon)
+    size_t index_offset = 0;
+    for (size_t f = 0; f < shapes[subMeshIndex].mesh.num_face_vertices.size(); f++) {
+        size_t fv = size_t(shapes[subMeshIndex].mesh.num_face_vertices[f]);
+
+        // Loop over vertices in the face.
+        for (size_t v = 0; v < fv; v++) {
+            // access to vertex
+            tinyobj::index_t idx = shapes[subMeshIndex].mesh.indices[index_offset + v];
+
+            tinyobj::real_t vx = attrib.vertices[3*size_t(idx.vertex_index)+0];
+            tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
+            tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
+
+            result.vertices.push_back(vx);
+            result.vertices.push_back(vy);
+            result.vertices.push_back(vz);
+
+            // Check if `normal_index` is zero or positive. negative = no normal data
+            if (idx.normal_index >= 0) {
+                tinyobj::real_t nx = attrib.normals[3*size_t(idx.normal_index)+0];
+                tinyobj::real_t ny = attrib.normals[3*size_t(idx.normal_index)+1];
+                tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
+                result.normals.push_back(nx);
+                result.normals.push_back(ny);
+                result.normals.push_back(nz);
+            }
+
+            // Check if `texcoord_index` is zero or positive. negative = no texcoord data
+            if (idx.texcoord_index >= 0) {
+                tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
+                tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
+                result.uvs.push_back(tx);
+                result.uvs.push_back(ty);
+            }
+
+            // Optional: vertex colors
+            // tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
+            // tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
+            // tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
+        }
+        index_offset += fv;
+
+        for (int i = 0; i < shapes[subMeshIndex].mesh.indices.size(); i++) {
+            tinyobj::index_t idx = shapes[subMeshIndex].mesh.indices[i];
+            result.indices.push_back(i);
+        }
+
+        // per-face material
+        shapes[subMeshIndex].mesh.material_ids[f];
+    }
+
+    return result;
+}
+
+Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath) {
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = std::regex_replace(meshAssetPath, std::regex(".obj\n"), ".mtl");
 
@@ -54,66 +115,14 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
         globals.logger.Log("TinyObjReader: " + reader.Warning());
     }
 
-    auto& attrib = reader.GetAttrib();
     auto& shapes = reader.GetShapes();
-    auto& materials = reader.GetMaterials();
 
     std::vector<Mesh> meshes = {};
     meshes.resize(shapes.size());
 
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
-        // Loop over faces(polygon)
-        size_t index_offset = 0;
-        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-            size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-
-            // Loop over vertices in the face.
-            for (size_t v = 0; v < fv; v++) {
-                // access to vertex
-                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-
-                tinyobj::real_t vx = attrib.vertices[3*size_t(idx.vertex_index)+0];
-                tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
-                tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
-
-                meshes[s].vertices.push_back(vx);
-                meshes[s].vertices.push_back(vy);
-                meshes[s].vertices.push_back(vz);
-
-                // Check if `normal_index` is zero or positive. negative = no normal data
-                if (idx.normal_index >= 0) {
-                    tinyobj::real_t nx = attrib.normals[3*size_t(idx.normal_index)+0];
-                    tinyobj::real_t ny = attrib.normals[3*size_t(idx.normal_index)+1];
-                    tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
-                    meshes[s].normals.push_back(nx);
-                    meshes[s].normals.push_back(ny);
-                    meshes[s].normals.push_back(nz);
-                }
-
-                // Check if `texcoord_index` is zero or positive. negative = no texcoord data
-                if (idx.texcoord_index >= 0) {
-                    tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
-                    tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
-                    meshes[s].uvs.push_back(tx);
-                    meshes[s].uvs.push_back(ty);
-                }
-
-                // Optional: vertex colors
-                // tinyobj::real_t red   = attrib.colors[3*size_t(idx.vertex_index)+0];
-                // tinyobj::real_t green = attrib.colors[3*size_t(idx.vertex_index)+1];
-                // tinyobj::real_t blue  = attrib.colors[3*size_t(idx.vertex_index)+2];
-            }
-            index_offset += fv;
-
-            for (int i = 0; i < shapes[s].mesh.indices.size(); i++) {
-                tinyobj::index_t idx = shapes[s].mesh.indices[i];
-                meshes[s].indices.push_back(i);
-            }
-
-            // per-face material
-            shapes[s].mesh.material_ids[f];
-        }
+        meshes[s] = LoadMeshSubAsset(meshAssetPath, s, reader);
     }
 
     for (Mesh& mesh : meshes) {
@@ -123,6 +132,13 @@ Multimesh Renderer::LoadMeshAsset(std::string meshAssetPath) {
 
     globals.logger.Log("successfully loaded obj file: " + meshAssetPath);
     return {.meshes = meshes};
+}
+
+Batchmesh Renderer::LoadBatchmeshAsset(std::string meshAssetPath) {
+    Batchmesh result = {
+    };
+
+    return result;
 }
 
 void Renderer::RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin) {

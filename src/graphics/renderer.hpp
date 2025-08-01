@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#include "tiny_obj_loader.h"
+#include "structures/batchmesh.hpp"
 #include "structures/camera.hpp"
 #include "structures/framebuffer.hpp"
 #include "structures/multimesh.hpp"
@@ -34,7 +36,9 @@ public:
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
     static void CreateMeshBuffers(Mesh& mesh);
-    static Multimesh LoadMeshAsset(std::string meshAssetPath);
+    static Mesh LoadMeshSubAsset(std::string meshAssetPath, int subMeshIndex, tinyobj::ObjReader& reader);
+    static Multimesh LoadMultimeshAsset(std::string meshAssetPath);
+    static Batchmesh LoadBatchmeshAsset(std::string meshAssetPath);
 
     static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
 
