@@ -5,7 +5,8 @@ layout (location = 0) in vec2 pUV;
 uniform sampler2D colorTexture;
 uniform sampler2D normalTexture;
 uniform sampler2D positionTexture;
-uniform sampler2D specularTexture;
+uniform sampler2D materialTexture;
+uniform sampler2D depthTexture;
 
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
@@ -14,7 +15,7 @@ uniform vec3 cameraPosition;
 
 out vec4 fragColor;
 
-uniform float weight[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+uniform float weight[5] = float[] (0.382925, 0.241732, 0.060598, 0.005977, 0.000229);
 
 vec3 blurredSample(sampler2D image) {
     vec2 texOffset = 1.0f / textureSize(image, 0);
@@ -29,16 +30,25 @@ vec3 blurredSample(sampler2D image) {
 
 void main() {
     vec3 position = texture(positionTexture, pUV).rgb;
-    vec3 normal = blurredSample(normalTexture);
-    vec3 color = blurredSample(colorTexture);
-    vec3 specular = texture(specularTexture, pUV).rgb;
+    float depth = distance(cameraPosition, position);
+
+    vec3 normal = vec3(0.0f);
+    if(depth > 15.0f) {
+        normal = texture(normalTexture, pUV).rgb;
+    }
+    else {
+        normal = blurredSample(normalTexture);
+    }
+
+    vec3 color = texture(colorTexture, pUV).rgb;
+    vec4 material = texture(materialTexture, pUV);
 
     vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.0f) * sunColor;
 
     vec3 viewDirection = normalize(cameraPosition - position);
     vec3 reflectDirection = reflect(normalize(sunDirection), normal);
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
-    vec3 finalSpecular = specular * spec * sunColor;
+    vec3 finalSpecular = material.r * spec * sunColor;
 
     vec3 lighting = (ambientColor + diffuse + finalSpecular) * color;
     fragColor = vec4(lighting, 1.0f);

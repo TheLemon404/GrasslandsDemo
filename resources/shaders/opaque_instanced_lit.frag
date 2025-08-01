@@ -12,7 +12,7 @@ uniform int hasBaseTexture;
 layout (location = 0) out vec4 color;
 layout (location = 1) out vec4 normal;
 layout (location = 2) out vec4 position;
-layout (location = 3) out vec4 spec;
+layout (location = 3) out vec4 material;
 
 void main()
 {
@@ -24,5 +24,5 @@ void main()
     }
     normal = vec4(pNormal, 1.0f);
     position = vec4(pPosition, 1.0f);
-    spec = vec4(specular);
+    material = vec4(specular, 0.0f, 0.0f, 0.0f);
 }

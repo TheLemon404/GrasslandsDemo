@@ -8,6 +8,6 @@ struct Framebuffer {
     Texture colorTexture;
     Texture normalTexture;
     Texture positionTexture;
-    Texture specularTexture;
+    Texture materialTexture;
     Renderbuffer depthStencilRenderbuffer;
 };

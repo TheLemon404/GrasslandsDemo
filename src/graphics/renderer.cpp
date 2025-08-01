@@ -291,7 +291,7 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
             .width = width,
             .height = height
         },
-        .specularTexture = {
+        .materialTexture = {
             .width = width,
             .height = height
         },
@@ -324,12 +324,12 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, framebuffer.positionTexture.id, 0);
 
-    glGenTextures(1, &framebuffer.specularTexture.id);
-    glBindTexture(GL_TEXTURE_2D, framebuffer.specularTexture.id);
+    glGenTextures(1, &framebuffer.materialTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.materialTexture.id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, framebuffer.specularTexture.id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, framebuffer.materialTexture.id, 0);
 
     glGenRenderbuffers(1, &framebuffer.depthStencilRenderbuffer.id);
     glBindRenderbuffer(GL_RENDERBUFFER, framebuffer.depthStencilRenderbuffer.id);
@@ -410,6 +410,7 @@ void Renderer::DrawActiveScene() {
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     for (Multimesh& multimesh : globals.scene.meshes) {
         UpdateTransform(multimesh.transform);
@@ -473,6 +474,7 @@ void Renderer::DrawActiveScene() {
     glUniform1i(glGetUniformLocation(prepassShader.programId, "normalTexture"), 1);
     glUniform1i(glGetUniformLocation(prepassShader.programId, "positionTexture"), 2);
     glUniform1i(glGetUniformLocation(prepassShader.programId, "specularTexture"), 3);
+    glUniform1i(glGetUniformLocation(prepassShader.programId, "depthTexture"), 3);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, framebuffer.colorTexture.id);
@@ -481,7 +483,7 @@ void Renderer::DrawActiveScene() {
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, framebuffer.positionTexture.id);
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, framebuffer.specularTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.materialTexture.id);
 
     //upload environment data
     UploadShaderUniformVec3(prepassShader.programId, "sunDirection", globals.scene.environment.sunDirection);
