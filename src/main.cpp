@@ -22,6 +22,8 @@ int main() {
     while (!globals.window.ShouldClose()) {
         globals.clock.Tick();
 
+        globals.renderer.camera.position += (globals.renderer.camera.position - globals.renderer.camera.target) * (-globals.window.mouseProperties.mouseScrollVector.y / 20.0f);
+
         if (quilIsMouseButtonPressed(GLFW_MOUSE_BUTTON_1)) {
             glm::vec3 cameraForward = glm::normalize(globals.renderer.camera.target - globals.renderer.camera.position);
             glm::vec3 cameraRight = glm::normalize(glm::cross(globals.renderer.camera.up, cameraForward));

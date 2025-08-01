@@ -7,6 +7,7 @@
 struct MouseProperties {
     glm::vec2 mousePosition;
     glm::vec2 mousePositionLast;
+    glm::vec2 mouseScrollVector;
 };
 
 class Window {
@@ -25,4 +26,5 @@ public:
 private:
     static void OnResize(GLFWwindow* window, int width, int height);
     static void OnMouseMove(GLFWwindow* window, double x, double y);
+    static void OnMouseScroll(GLFWwindow* window, double xOffset, double yOffset);
 };

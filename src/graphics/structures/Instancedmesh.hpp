@@ -5,7 +5,7 @@
 #include "mesh.hpp"
 #include "transform.hpp"
 
-struct Batchmesh {
+struct Instancedmesh {
     Mesh mesh;
     std::vector<Transform> transforms;
 };

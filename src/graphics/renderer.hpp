@@ -2,7 +2,7 @@
 #include <string>
 
 #include "tiny_obj_loader.h"
-#include "structures/batchmesh.hpp"
+#include "structures/Instancedmesh.hpp"
 #include "structures/camera.hpp"
 #include "structures/framebuffer.hpp"
 #include "structures/multimesh.hpp"
@@ -13,14 +13,17 @@ class Renderer {
     void LoadShaders();
 
     void UpdateCameraMatrices();
-    void UpdateMultimeshMatrices(Multimesh& multimesh);
+    static void UpdateTransform(Transform& transform);
     void UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform);
     void UploadMaterialUniforms(Mesh& mesh);
 
     Framebuffer framebuffer;
 
+    static void CreateMeshBuffers(Mesh& mesh);
+
 public:
-    Shader meshLitShader;
+    Shader opaqueLitShader;
+    Shader opaqueInstancedLitShader;
     Shader prepassShader;
 
     Camera camera;
@@ -35,10 +38,9 @@ public:
     static void UploadShaderUniformFloat(unsigned int programId, std::string uniformName, float value);
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
-    static void CreateMeshBuffers(Mesh& mesh);
     static Mesh LoadMeshSubAsset(std::string meshAssetPath, int subMeshIndex, tinyobj::ObjReader& reader);
     static Multimesh LoadMultimeshAsset(std::string meshAssetPath);
-    static Batchmesh LoadBatchmeshAsset(std::string meshAssetPath);
+    static Instancedmesh LoadInstancedmeshAsset(std::string meshAssetPath, std::vector<Transform> transforms);
 
     static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
 

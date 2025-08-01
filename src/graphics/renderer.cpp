@@ -1,4 +1,7 @@
 #include "renderer.hpp"
+
+#include <algorithm>
+
 #include "tiny_obj_loader.h"
 #include <cassert>
 #include <regex>
@@ -127,14 +130,14 @@ Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath) {
 
     for (Mesh& mesh : meshes) {
         CreateMeshBuffers(mesh);
-        mesh.material.shaderProgramId = globals.renderer.meshLitShader.programId;
+        mesh.material.shaderProgramId = globals.renderer.opaqueLitShader.programId;
     }
 
     globals.logger.Log("successfully loaded obj file: " + meshAssetPath);
     return {.meshes = meshes};
 }
 
-Batchmesh Renderer::LoadBatchmeshAsset(std::string meshAssetPath) {
+Instancedmesh Renderer::LoadInstancedmeshAsset(std::string meshAssetPath, std::vector<Transform> transforms) {
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = std::regex_replace(meshAssetPath, std::regex(".obj\n"), ".mtl");
 
@@ -153,8 +156,16 @@ Batchmesh Renderer::LoadBatchmeshAsset(std::string meshAssetPath) {
 
     Mesh mesh = LoadMeshSubAsset(meshAssetPath, 0, reader);
 
-    Batchmesh result = {
-        .mesh = mesh
+    for (int i = 0; i < transforms.size(); i++) {
+        UpdateTransform(transforms[i]);
+    }
+
+    CreateMeshBuffers(mesh);
+    mesh.material.shaderProgramId = globals.renderer.opaqueInstancedLitShader.programId;
+
+    Instancedmesh result = {
+        .mesh = mesh,
+        .transforms = transforms
     };
 
     return result;
@@ -337,7 +348,8 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
 }
 
 void Renderer::LoadShaders() {
-    meshLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
+    opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
+    opaqueInstancedLitShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
     prepassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
 }
 
@@ -349,13 +361,13 @@ void Renderer::UpdateCameraMatrices() {
     camera.view = glm::lookAt(camera.position, camera.target, camera.up);
 }
 
-void Renderer::UpdateMultimeshMatrices(Multimesh &multimesh) {
-    multimesh.transform.matrix = glm::identity<glm::mat4>();
-    multimesh.transform.matrix = glm::scale(multimesh.transform.matrix, multimesh.transform.scale);
-    multimesh.transform.matrix = glm::rotate(multimesh.transform.matrix, multimesh.transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    multimesh.transform.matrix = glm::rotate(multimesh.transform.matrix, multimesh.transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    multimesh.transform.matrix = glm::rotate(multimesh.transform.matrix, multimesh.transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    multimesh.transform.matrix = glm::translate(multimesh.transform.matrix, multimesh.transform.position);
+void Renderer::UpdateTransform(Transform& transform) {
+    transform.matrix = glm::identity<glm::mat4>();
+    transform.matrix = glm::scale(transform.matrix, transform.scale);
+    transform.matrix = glm::rotate(transform.matrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    transform.matrix = glm::rotate(transform.matrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    transform.matrix = glm::rotate(transform.matrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    transform.matrix = glm::translate(transform.matrix, transform.position);
 }
 
 void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform) {
@@ -400,7 +412,7 @@ void Renderer::DrawActiveScene() {
     glEnable(GL_DEPTH_TEST);
 
     for (Multimesh& multimesh : globals.scene.meshes) {
-        UpdateMultimeshMatrices(multimesh);
+        UpdateTransform(multimesh.transform);
 
         for (Mesh& mesh : multimesh.meshes) {
             glBindVertexArray(mesh.vao);
@@ -420,6 +432,31 @@ void Renderer::DrawActiveScene() {
             glDisableVertexAttribArray(2);
             glBindVertexArray(0);
         }
+    }
+
+    for (Instancedmesh instancedmesh : globals.scene.instancedmeshes) {
+        glBindVertexArray(instancedmesh.mesh.vao);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glUseProgram(instancedmesh.mesh.material.shaderProgramId);
+
+        for (int i = 0; i < instancedmesh.transforms.size(); i++) {
+            UpdateTransform(instancedmesh.transforms[i]);
+            UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "transforms[" + std::to_string(i) + "]", instancedmesh.transforms[i].matrix);
+        }
+
+        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "view", camera.view);
+        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "projection", camera.projection);
+        UploadMaterialUniforms(instancedmesh.mesh);
+
+        glDrawElementsInstanced(GL_TRIANGLES, instancedmesh.mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedmesh.transforms.size());
+
+        glUseProgram(0);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+        glBindVertexArray(0);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -457,5 +494,5 @@ void Renderer::DrawActiveScene() {
 }
 
 void Renderer::CleanUp() {
-    DeleteShader(meshLitShader);
+    DeleteShader(opaqueLitShader);
 }
