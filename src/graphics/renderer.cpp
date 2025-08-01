@@ -301,7 +301,7 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
 }
 
 void Renderer::LoadShaders() {
-    meshLitShader = CreateShader("resources/shaders/mesh_lit.vert", "resources/shaders/mesh_lit.frag");
+    meshLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
     prepassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
 }
 
