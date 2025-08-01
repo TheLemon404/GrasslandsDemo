@@ -286,8 +286,9 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, framebuffer.specularTexture.id, 0);
 
     glGenRenderbuffers(1, &framebuffer.depthStencilRenderbuffer.id);
-    glBindRenderbuffer(GL_TEXTURE_2D, framebuffer.depthStencilRenderbuffer.id);
+    glBindRenderbuffer(GL_RENDERBUFFER, framebuffer.depthStencilRenderbuffer.id);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer.depthStencilRenderbuffer.id);
 
     const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
@@ -295,6 +296,61 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         globals.logger.ThrowRuntimeError("failed to create framebuffer");
+    }
+
+    return framebuffer;
+}
+
+Framebuffer Renderer::CreateMultiSampledFramebuffer(unsigned int width, unsigned int height) {
+    Framebuffer framebuffer = {
+        .colorTexture = {
+            .width = width,
+            .height = height},
+        .normalTexture = {
+            .width = width,
+            .height = height
+        },
+        .positionTexture = {
+            .width = width,
+            .height = height
+        },
+        .specularTexture = {
+            .width = width,
+            .height = height
+        },
+        .depthStencilRenderbuffer = {
+            .width = width,
+            .height = height}
+    };
+
+    glGenFramebuffers(1, &framebuffer.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
+
+    glGenTextures(1, &framebuffer.colorTexture.id);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.colorTexture.id);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, globals.settings.msaaSamples, GL_RGB, width, height, GL_FALSE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.colorTexture.id, 0);
+
+    glGenTextures(1, &framebuffer.normalTexture.id);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.normalTexture.id);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, globals.settings.msaaSamples, GL_RGB, width, height, GL_FALSE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.normalTexture.id, 0);
+
+    glGenTextures(1, &framebuffer.positionTexture.id);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.positionTexture.id);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, globals.settings.msaaSamples, GL_RGB, width, height, GL_FALSE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.positionTexture.id, 0);
+
+    glGenTextures(1, &framebuffer.specularTexture.id);
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.specularTexture.id);
+    glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, globals.settings.msaaSamples, GL_RGB, width, height, GL_FALSE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.specularTexture.id, 0);
+
+    const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(4, drawBuffers);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        globals.logger.ThrowRuntimeError("failed to create multi-sampled framebuffer");
     }
 
     return framebuffer;
@@ -344,6 +400,7 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
 void Renderer::Initialize() {
     LoadShaders();
 
+    multisampledFramebuffer = CreateMultiSampledFramebuffer(globals.window.width, globals.window.height);
     framebuffer = CreateFramebuffer(globals.window.width, globals.window.height);
 
     UpdateCameraMatrices();
@@ -353,7 +410,7 @@ void Renderer::DrawActiveScene() {
     UpdateCameraMatrices();
 
     //first pass
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, multisampledFramebuffer.id);
     glViewport(0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -385,6 +442,25 @@ void Renderer::DrawActiveScene() {
             glBindVertexArray(0);
         }
     }
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, multisampledFramebuffer.id);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.id);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glBlitFramebuffer(0, 0, multisampledFramebuffer.colorTexture.width, multisampledFramebuffer.colorTexture.height, 0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    glBlitFramebuffer(0, 0, multisampledFramebuffer.colorTexture.width, multisampledFramebuffer.colorTexture.height, 0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT2);
+    glDrawBuffer(GL_COLOR_ATTACHMENT2);
+    glBlitFramebuffer(0, 0, multisampledFramebuffer.colorTexture.width, multisampledFramebuffer.colorTexture.height, 0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT3);
+    glDrawBuffer(GL_COLOR_ATTACHMENT3);
+    glBlitFramebuffer(0, 0, multisampledFramebuffer.colorTexture.width, multisampledFramebuffer.colorTexture.height, 0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     //second pass
