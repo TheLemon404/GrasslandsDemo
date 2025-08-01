@@ -16,7 +16,6 @@ class Renderer {
     void UploadMaterialUniforms(Mesh& mesh);
 
     Framebuffer framebuffer;
-    Framebuffer multisampledFramebuffer;
 
 public:
     Shader meshLitShader;
@@ -38,7 +37,6 @@ public:
     static Multimesh LoadMeshAsset(std::string meshAssetPath);
 
     static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
-    static Framebuffer CreateMultiSampledFramebuffer(unsigned int width, unsigned int height);
 
     void Initialize();
     void DrawActiveScene();
