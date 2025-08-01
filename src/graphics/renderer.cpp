@@ -135,7 +135,26 @@ Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath) {
 }
 
 Batchmesh Renderer::LoadBatchmeshAsset(std::string meshAssetPath) {
+    tinyobj::ObjReaderConfig reader_config;
+    reader_config.mtl_search_path = std::regex_replace(meshAssetPath, std::regex(".obj\n"), ".mtl");
+
+    tinyobj::ObjReader reader;
+
+    if (!reader.ParseFromFile(meshAssetPath.c_str(), reader_config)) {
+        if (!reader.Error().empty()) {
+            globals.logger.ThrowRuntimeError("TinyObjReader: " + reader.Error());
+        }
+        exit(1);
+    }
+
+    if (!reader.Warning().empty()) {
+        globals.logger.Log("TinyObjReader: " + reader.Warning());
+    }
+
+    Mesh mesh = LoadMeshSubAsset(meshAssetPath, 0, reader);
+
     Batchmesh result = {
+        .mesh = mesh
     };
 
     return result;
@@ -331,12 +350,12 @@ void Renderer::UpdateCameraMatrices() {
 }
 
 void Renderer::UpdateMultimeshMatrices(Multimesh &multimesh) {
-    multimesh.transform = glm::identity<glm::mat4>();
-    multimesh.transform = glm::scale(multimesh.transform, multimesh.scale);
-    multimesh.transform = glm::rotate(multimesh.transform, multimesh.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    multimesh.transform = glm::rotate(multimesh.transform, multimesh.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    multimesh.transform = glm::rotate(multimesh.transform, multimesh.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
-    multimesh.transform = glm::translate(multimesh.transform, multimesh.position);
+    multimesh.transform.matrix = glm::identity<glm::mat4>();
+    multimesh.transform.matrix = glm::scale(multimesh.transform.matrix, multimesh.transform.scale);
+    multimesh.transform.matrix = glm::rotate(multimesh.transform.matrix, multimesh.transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    multimesh.transform.matrix = glm::rotate(multimesh.transform.matrix, multimesh.transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    multimesh.transform.matrix = glm::rotate(multimesh.transform.matrix, multimesh.transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    multimesh.transform.matrix = glm::translate(multimesh.transform.matrix, multimesh.transform.position);
 }
 
 void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform) {
@@ -390,7 +409,7 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(2);
             glUseProgram(mesh.material.shaderProgramId);
 
-            UploadMesh3DMatrices(mesh, multimesh.transform);
+            UploadMesh3DMatrices(mesh, multimesh.transform.matrix);
             UploadMaterialUniforms(mesh);
 
             glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);

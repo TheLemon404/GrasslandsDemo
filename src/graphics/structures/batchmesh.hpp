@@ -3,11 +3,9 @@
 
 #include "fwd.hpp"
 #include "mesh.hpp"
+#include "transform.hpp"
 
 struct Batchmesh {
     Mesh mesh;
-    std::vector<glm::vec3> positions;
-    std::vector<glm::vec3> rotations;
-    std::vector<glm::vec3> scales;
-    std::vector<glm::mat4> transforms;
+    std::vector<Transform> transforms;
 };
