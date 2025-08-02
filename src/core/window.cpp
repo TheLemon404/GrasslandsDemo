@@ -16,6 +16,8 @@ bool Window::Initialize(unsigned int width, unsigned int height, const char* tit
         return false;
     }
 
+    glfwWindowHint(GLFW_SAMPLES, globals.settings.msaaSamples);
+
     glfwWindow = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
     if (!glfwWindow) {

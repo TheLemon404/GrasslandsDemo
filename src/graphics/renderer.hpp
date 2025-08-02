@@ -38,7 +38,7 @@ public:
     static void UploadShaderUniformFloat(unsigned int programId, std::string uniformName, float value);
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
-    static Mesh LoadMeshSubAsset(std::string meshAssetPath, int subMeshIndex, tinyobj::ObjReader& reader);
+    static Mesh LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader);
     static Multimesh LoadMultimeshAsset(std::string meshAssetPath);
     static Instancedmesh LoadInstancedmeshAsset(std::string meshAssetPath, std::vector<Transform> transforms);
 

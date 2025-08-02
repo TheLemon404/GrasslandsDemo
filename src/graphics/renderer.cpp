@@ -39,7 +39,7 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glEnableVertexAttribArray(2);
 }
 
-Mesh Renderer::LoadMeshSubAsset(std::string meshAssetPath, int subMeshIndex, tinyobj::ObjReader& reader) {
+Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
     auto& attrib = reader.GetAttrib();
     auto& shapes = reader.GetShapes();
     auto& materials = reader.GetMaterials();
@@ -125,7 +125,7 @@ Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath) {
 
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
-        meshes[s] = LoadMeshSubAsset(meshAssetPath, s, reader);
+        meshes[s] = LoadMeshSubAsset(s, reader);
     }
 
     for (Mesh& mesh : meshes) {
@@ -154,7 +154,7 @@ Instancedmesh Renderer::LoadInstancedmeshAsset(std::string meshAssetPath, std::v
         globals.logger.Log("TinyObjReader: " + reader.Warning());
     }
 
-    Mesh mesh = LoadMeshSubAsset(meshAssetPath, 0, reader);
+    Mesh mesh = LoadMeshSubAsset(0, reader);
 
     for (int i = 0; i < transforms.size(); i++) {
         UpdateTransform(transforms[i]);
