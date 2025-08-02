@@ -10,7 +10,8 @@ uniform sampler2D depthTexture;
 
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
-uniform vec3 ambientColor;
+uniform vec3 shadowColor;
+uniform float blurDistance;
 uniform vec3 cameraPosition;
 
 out vec4 fragColor;
@@ -33,11 +34,18 @@ void main() {
     float depth = distance(cameraPosition, position);
 
     vec3 normal = vec3(0.0f);
-    if(depth > 15.0f) {
+
+    if(depth > blurDistance) {
         normal = texture(normalTexture, pUV).rgb;
     }
     else {
         normal = blurredSample(normalTexture);
+    }
+
+    if(depth > 1000)
+    {
+        fragColor = vec4(position, 1.0f);
+        return;
     }
 
     vec3 color = texture(colorTexture, pUV).rgb;
@@ -50,6 +58,7 @@ void main() {
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
     vec3 finalSpecular = material.r * spec * sunColor;
 
-    vec3 lighting = (ambientColor + diffuse + finalSpecular) * color;
-    fragColor = vec4(lighting, 1.0f);
+    vec3 lighting = (shadowColor + diffuse + finalSpecular) * color;
+    vec4 final = vec4(lighting, 1.0f);
+    fragColor = final;
 }

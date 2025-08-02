@@ -392,25 +392,23 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
 void Renderer::Initialize() {
     LoadShaders();
 
-    framebuffer = CreateFramebuffer(globals.window.width, globals.window.height);
-
     UpdateCameraMatrices();
-}
-
-void Renderer::DrawActiveScene() {
-    UpdateCameraMatrices();
-
-    //first pass
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
-    glViewport(0, 0, framebuffer.colorTexture.width, framebuffer.colorTexture.height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    glEnable(GL_MULTISAMPLE);
+}
+
+void Renderer::DrawActiveScene() {
+    UpdateCameraMatrices();
+
+    //first pass
+    glViewport(0, 0, globals.window.width, globals.window.height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(globals.scene.environment.clearColor.r, globals.scene.environment.clearColor.g, globals.scene.environment.clearColor.b, 1.0f);
 
     for (Multimesh& multimesh : globals.scene.meshes) {
         UpdateTransform(multimesh.transform);
@@ -424,6 +422,13 @@ void Renderer::DrawActiveScene() {
 
             UploadMesh3DMatrices(mesh, multimesh.transform.matrix);
             UploadMaterialUniforms(mesh);
+
+            //upload environment data
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", globals.scene.environment.sunDirection);
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", globals.scene.environment.sunColor);
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
+            UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
 
             glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -451,6 +456,13 @@ void Renderer::DrawActiveScene() {
         UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "projection", camera.projection);
         UploadMaterialUniforms(instancedmesh.mesh);
 
+        //upload environment data
+        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "sunDirection", globals.scene.environment.sunDirection);
+        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "sunColor", globals.scene.environment.sunColor);
+        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
+        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "cameraPosition", camera.position);
+        UploadShaderUniformFloat(instancedmesh.mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
+
         glDrawElementsInstanced(GL_TRIANGLES, instancedmesh.mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedmesh.transforms.size());
 
         glUseProgram(0);
@@ -459,42 +471,10 @@ void Renderer::DrawActiveScene() {
         glDisableVertexAttribArray(2);
         glBindVertexArray(0);
     }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    //second pass
-    glViewport(0, 0, globals.window.width, globals.window.height);
-    glDisable(GL_DEPTH_TEST);
-    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    //upload framebuffer textures
-    glUseProgram(prepassShader.programId);
-    glUniform1i(glGetUniformLocation(prepassShader.programId, "colorTexture"), 0);
-    glUniform1i(glGetUniformLocation(prepassShader.programId, "normalTexture"), 1);
-    glUniform1i(glGetUniformLocation(prepassShader.programId, "positionTexture"), 2);
-    glUniform1i(glGetUniformLocation(prepassShader.programId, "specularTexture"), 3);
-    glUniform1i(glGetUniformLocation(prepassShader.programId, "depthTexture"), 3);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, framebuffer.colorTexture.id);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, framebuffer.normalTexture.id);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, framebuffer.positionTexture.id);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, framebuffer.materialTexture.id);
-
-    //upload environment data
-    UploadShaderUniformVec3(prepassShader.programId, "sunDirection", globals.scene.environment.sunDirection);
-    UploadShaderUniformVec3(prepassShader.programId, "sunColor", globals.scene.environment.sunColor);
-    UploadShaderUniformVec3(prepassShader.programId, "ambientColor", globals.scene.environment.ambientColor);
-    UploadShaderUniformVec3(prepassShader.programId, "cameraPosition", camera.position);
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glUseProgram(0);
 }
 
 void Renderer::CleanUp() {
     DeleteShader(opaqueLitShader);
+    DeleteShader(opaqueInstancedLitShader);
+    DeleteShader(prepassShader);
 }
