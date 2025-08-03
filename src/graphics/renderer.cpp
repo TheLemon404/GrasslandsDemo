@@ -95,15 +95,15 @@ Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
         }
 
         // per-face material
-        shapes[subMeshIndex].mesh.material_ids[f];
+        int matId = shapes[subMeshIndex].mesh.material_ids[f];
     }
 
     return result;
 }
 
-Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath) {
+Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath, std::string materialAssetPath) {
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = std::regex_replace(meshAssetPath, std::regex(".obj\n"), ".mtl");
+    reader_config.mtl_search_path = materialAssetPath.c_str();
 
     tinyobj::ObjReader reader;
 
@@ -137,9 +137,9 @@ Multimesh Renderer::LoadMultimeshAsset(std::string meshAssetPath) {
     return {.meshes = meshes};
 }
 
-Instancedmesh Renderer::LoadInstancedmeshAsset(std::string meshAssetPath, std::vector<Transform> transforms) {
+Instancedmesh Renderer::LoadInstancedmeshAsset(std::string meshAssetPath, std::string materialAssetPath, std::vector<Transform> transforms) {
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = std::regex_replace(meshAssetPath, std::regex(".obj\n"), ".mtl");
+    reader_config.mtl_search_path = materialAssetPath.c_str();
 
     tinyobj::ObjReader reader;
 
@@ -347,10 +347,42 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
     return framebuffer;
 }
 
+Framebuffer Renderer::CreateShadowFramebuffer(unsigned int width, unsigned int height) {
+    Framebuffer framebuffer = {
+        .depthTexture = {
+            .width = width,
+            .height = height
+        }
+    };
+
+    glGenFramebuffers(1, &framebuffer.id);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.id);
+
+    glGenTextures(1, &framebuffer.depthTexture.id);
+    glBindTexture(GL_TEXTURE_2D, framebuffer.depthTexture.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, framebuffer.depthTexture.id, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        globals.logger.ThrowRuntimeError("failed to create framebuffer");
+    }
+
+    return framebuffer;
+}
+
 void Renderer::LoadShaders() {
     opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
     opaqueInstancedLitShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
-    prepassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
+    shadowPassShader = CreateShader("resources/shaders/shadow_pass.vert", "resources/shaders/shadow_pass.frag");
+    shadowInstancedPassShader = CreateShader("resources/shaders/shadow_instanced_pass.vert", "resources/shaders/shadow_instanced_pass.frag");
+    postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
 }
 
 void Renderer::UpdateCameraMatrices() {
@@ -363,22 +395,22 @@ void Renderer::UpdateCameraMatrices() {
 
 void Renderer::UpdateTransform(Transform& transform) {
     transform.matrix = glm::identity<glm::mat4>();
-    transform.matrix = glm::scale(transform.matrix, transform.scale);
-    transform.matrix = glm::rotate(transform.matrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
-    transform.matrix = glm::rotate(transform.matrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
-    transform.matrix = glm::rotate(transform.matrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
     transform.matrix = glm::translate(transform.matrix, transform.position);
+    transform.matrix = glm::rotate(transform.matrix, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+    transform.matrix = glm::rotate(transform.matrix, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+    transform.matrix = glm::rotate(transform.matrix, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+    transform.matrix = glm::scale(transform.matrix, transform.scale);
 }
 
-void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform) {
+void Renderer::UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform, glm::mat4& view, glm::mat4& projection) {
     UploadShaderUniformMat4(mesh.material.shaderProgramId, "transform", transform);
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", camera.view);
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", camera.projection);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", view);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", projection);
 }
 
 void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shaderProgramId, "albedo", mesh.material.albedo);
-    UploadShaderUniformFloat(mesh.material.shaderProgramId, "specular", mesh.material.specular);
+    UploadShaderUniformFloat(mesh.material.shaderProgramId, "roughness", mesh.material.roughness);
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
         UploadShaderUniformInt(mesh.material.shaderProgramId, "haseBaseTexture", 0);
     }
@@ -392,11 +424,13 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
 void Renderer::Initialize() {
     LoadShaders();
 
+    shadowFramebuffer = CreateShadowFramebuffer(globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
+
     UpdateCameraMatrices();
 
     glEnable(GL_CULL_FACE);
-    glFrontFace(GL_CCW);
-    glCullFace(GL_BACK);
+    glCullFace(GL_FRONT);
+    glFrontFace(GL_CW);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_MULTISAMPLE);
@@ -405,7 +439,70 @@ void Renderer::Initialize() {
 void Renderer::DrawActiveScene() {
     UpdateCameraMatrices();
 
-    //first pass
+    //shadow pass
+    glCullFace(GL_BACK);
+    glViewport(0, 0, globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
+    glBindFramebuffer(GL_FRAMEBUFFER, shadowFramebuffer.id);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    float near_plane = 1.0f, far_plane = 7.5f;
+    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    glm::mat4 lightView = glm::lookAt(-globals.scene.environment.sunDirection,
+                                  glm::vec3( 0.0f, 0.0f,  0.0f),
+                                  glm::vec3( 0.0f, 1.0f,  0.0f));
+
+    for (Multimesh& multimesh : globals.scene.meshes) {
+        UpdateTransform(multimesh.transform);
+
+        for (Mesh& mesh : multimesh.meshes) {
+            glBindVertexArray(mesh.vao);
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glUseProgram(shadowPassShader.programId);
+
+            UploadShaderUniformMat4(shadowPassShader.programId, "transform", multimesh.transform.matrix);
+            UploadShaderUniformMat4(shadowPassShader.programId, "view", lightView);
+            UploadShaderUniformMat4(shadowPassShader.programId, "projection", lightProjection);
+
+            glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+
+            glUseProgram(0);
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
+            glBindVertexArray(0);
+        }
+    }
+
+    for (Instancedmesh instancedmesh : globals.scene.instancedmeshes) {
+        glBindVertexArray(instancedmesh.mesh.vao);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glUseProgram(shadowInstancedPassShader.programId);
+
+        for (int i = 0; i < instancedmesh.transforms.size(); i++) {
+            UpdateTransform(instancedmesh.transforms[i]);
+            UploadShaderUniformMat4(shadowInstancedPassShader.programId, "transforms[" + std::to_string(i) + "]", instancedmesh.transforms[i].matrix);
+        }
+
+        UploadShaderUniformMat4(shadowInstancedPassShader.programId, "view", lightView);
+        UploadShaderUniformMat4(shadowInstancedPassShader.programId, "projection", lightProjection);
+
+        glDrawElementsInstanced(GL_TRIANGLES, instancedmesh.mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedmesh.transforms.size());
+
+        glUseProgram(0);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+        glBindVertexArray(0);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    //forward pass
+    glCullFace(GL_FRONT);
     glViewport(0, 0, globals.window.width, globals.window.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(globals.scene.environment.clearColor.r, globals.scene.environment.clearColor.g, globals.scene.environment.clearColor.b, 1.0f);
@@ -420,7 +517,7 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(2);
             glUseProgram(mesh.material.shaderProgramId);
 
-            UploadMesh3DMatrices(mesh, multimesh.transform.matrix);
+            UploadMesh3DMatrices(mesh, multimesh.transform.matrix, camera.view, camera.projection);
             UploadMaterialUniforms(mesh);
 
             //upload environment data
@@ -429,6 +526,10 @@ void Renderer::DrawActiveScene() {
             UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
             UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
             UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
+            UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightView", lightView);
+            UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightProjection", lightProjection);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
             glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -462,6 +563,10 @@ void Renderer::DrawActiveScene() {
         UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
         UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "cameraPosition", camera.position);
         UploadShaderUniformFloat(instancedmesh.mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
+        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "lightView", lightView);
+        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "lightProjection", lightProjection);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
         glDrawElementsInstanced(GL_TRIANGLES, instancedmesh.mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedmesh.transforms.size());
 
@@ -476,5 +581,7 @@ void Renderer::DrawActiveScene() {
 void Renderer::CleanUp() {
     DeleteShader(opaqueLitShader);
     DeleteShader(opaqueInstancedLitShader);
-    DeleteShader(prepassShader);
+    DeleteShader(shadowPassShader);
+    DeleteShader(shadowInstancedPassShader);
+    DeleteShader(postpassShader);
 }

@@ -6,10 +6,13 @@ layout (location = 2) in vec2 aUV;
 uniform mat4 transforms[125];
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightView;
+uniform mat4 lightProjection;
 
 layout (location = 0) out vec3 pPosition;
 layout (location = 1) out vec3 pNormal;
 layout (location = 2) out vec2 pUV;
+layout (location = 3) out vec4 fragPosLightSpace;
 
 void main()
 {
@@ -18,4 +21,5 @@ void main()
     pNormal = (normalMatrix * aNormal).xyz;
     pUV = aUV;
     pPosition = (transforms[gl_InstanceID] * vec4(aPosition, 1.0f)).xyz;
+    fragPosLightSpace = lightProjection * lightView * transforms[gl_InstanceID] * vec4(aPosition, 1.0f);
 }

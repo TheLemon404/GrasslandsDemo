@@ -3,9 +3,10 @@
 layout (location = 0) in vec3 pPosition;
 layout (location = 1) in vec3 pNormal;
 layout (location = 2) in vec2 pUV;
+layout (location = 3) in vec4 fragPosLightSpace;
 
 uniform vec3 albedo;
-uniform float specular;
+uniform float roughness;
 uniform sampler2D baseTexture;
 uniform int hasBaseTexture;
 
@@ -14,11 +15,29 @@ uniform vec3 sunColor;
 uniform vec3 shadowColor;
 uniform float blurDistance;
 uniform vec3 cameraPosition;
+uniform sampler2D shadowMap;
 
 layout (location = 0) out vec4 fragColor;
 
-void main()
-{
+float shadowCalculation() {
+    float bias = max(0.0001 * (1.0 - dot(pNormal, sunDirection)), 0.005);
+    // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    // get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    // get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // check whether current frag pos is in shadow
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+
+    if(projCoords.z > 1.0) shadow = 0.0;
+
+    return shadow;
+}
+
+void main() {
     vec4 color = vec4(1.0);
 
     if(hasBaseTexture == 1) {
@@ -35,9 +54,11 @@ void main()
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
-    vec3 finalSpecular = specular * spec * sunColor;
+    vec3 finalSpecular = (1.0 - roughness) * spec * sunColor;
 
-    vec3 lighting = (shadowColor + diffuse + finalSpecular) * color.rgb;
+    float shadow = shadowCalculation();
+
+    vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
     vec4 final = vec4(lighting, 1.0f);
     fragColor = final;
 }

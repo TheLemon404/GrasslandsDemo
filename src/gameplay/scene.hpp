@@ -9,6 +9,15 @@ struct Scene {
     std::vector<Instancedmesh> instancedmeshes;
 };
 
+struct GraphicsDemoScene : Scene {
+    GraphicsDemoScene() {
+        meshes.push_back(Renderer::LoadMultimeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl"));
+        meshes.push_back(Renderer::LoadMultimeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl"));
+        meshes[1].transform.scale = glm::vec3(10.0f, 1.0f, 10.0f);
+        meshes[1].transform.position.y -= 2.0f;
+    }
+};
+
 struct GameScene : Scene {
     GameScene() {
         std::vector<Transform> transforms;
@@ -22,6 +31,6 @@ struct GameScene : Scene {
                 }
             }
         }
-        instancedmeshes.push_back(Renderer::LoadInstancedmeshAsset("resources/meshes/smooth_box.obj", transforms));
+        instancedmeshes.push_back(Renderer::LoadInstancedmeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl", transforms));
     }
 };

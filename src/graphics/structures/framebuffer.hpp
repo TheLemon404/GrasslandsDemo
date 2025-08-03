@@ -9,5 +9,6 @@ struct Framebuffer {
     Texture normalTexture;
     Texture positionTexture;
     Texture materialTexture;
+    Texture depthTexture;
     Renderbuffer depthStencilRenderbuffer;
 };

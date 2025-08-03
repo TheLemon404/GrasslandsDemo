@@ -14,17 +14,19 @@ class Renderer {
 
     void UpdateCameraMatrices();
     static void UpdateTransform(Transform& transform);
-    void UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform);
+    void UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform, glm::mat4& view, glm::mat4& projection);
     void UploadMaterialUniforms(Mesh& mesh);
 
-    Framebuffer framebuffer;
+    Framebuffer shadowFramebuffer;
 
     static void CreateMeshBuffers(Mesh& mesh);
 
 public:
     Shader opaqueLitShader;
     Shader opaqueInstancedLitShader;
-    Shader prepassShader;
+    Shader shadowPassShader;
+    Shader shadowInstancedPassShader;
+    Shader postpassShader;
 
     Camera camera;
 
@@ -39,10 +41,11 @@ public:
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
     static Mesh LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader);
-    static Multimesh LoadMultimeshAsset(std::string meshAssetPath);
-    static Instancedmesh LoadInstancedmeshAsset(std::string meshAssetPath, std::vector<Transform> transforms);
+    static Multimesh LoadMultimeshAsset(std::string meshAssetPath, std::string materialAssetPath);
+    static Instancedmesh LoadInstancedmeshAsset(std::string meshAssetPath, std::string materialAssetPath, std::vector<Transform> transforms);
 
     static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
+    static Framebuffer CreateShadowFramebuffer(unsigned int width, unsigned int height);
 
     void Initialize();
     void DrawActiveScene();

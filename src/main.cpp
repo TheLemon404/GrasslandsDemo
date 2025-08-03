@@ -17,7 +17,7 @@ int main() {
     }
     globals.renderer.Initialize();
 
-    globals.scene = GameScene();
+    globals.scene = GraphicsDemoScene();
 
     while (!globals.window.ShouldClose()) {
         globals.clock.Tick();
