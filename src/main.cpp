@@ -1,6 +1,8 @@
 #include <glad/glad.h>
 #include "globals.hpp"
 #include "quil.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "gtx/rotate_vector.hpp"
 
 Globals globals = {};
 
@@ -21,6 +23,8 @@ int main() {
 
     while (!globals.window.ShouldClose()) {
         globals.clock.Tick();
+
+        globals.scene.environment.sunDirection = glm::rotateY(globals.scene.environment.sunDirection, 0.1f * (float)globals.clock.deltaTime);
 
         globals.renderer.camera.position += (globals.renderer.camera.position - globals.renderer.camera.target) * (-globals.window.mouseProperties.mouseScrollVector.y / 20.0f);
 

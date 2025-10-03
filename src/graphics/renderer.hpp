@@ -8,9 +8,28 @@
 #include "structures/multimesh.hpp"
 #include "structures/shader.hpp"
 
+static Mesh fullscreenQuad = {
+    .vertices = {
+        0.0f, 0.0f, 0.0f,   // 0
+         1.0f, 0.0f, 0.0f,   // 1
+         1.0f,  1.0f, 0.0f,   // 2
+        0.0f,  1.0f, 0.0f    // 3
+      },
+    .uvs = {
+        0.0f, 0.0f,  // 0
+        1.0f, 0.0f,  // 1
+        1.0f, 1.0f,  // 2
+        0.0f, 1.0f   // 3
+  },
+  .indices = {
+        0, 1, 2,
+        2, 3, 0
+    }
+};
+
 class Renderer {
+
     void DeleteShader(Shader& shader);
-    void LoadShaders();
 
     void UpdateCameraMatrices();
     static void UpdateTransform(Transform& transform);
@@ -22,11 +41,14 @@ class Renderer {
     static void CreateMeshBuffers(Mesh& mesh);
 
 public:
+    bool isDebugMode = true;
+
     Shader opaqueLitShader;
     Shader opaqueInstancedLitShader;
     Shader shadowPassShader;
     Shader shadowInstancedPassShader;
     Shader postpassShader;
+    Shader fullscreenQuadShader;
 
     Camera camera;
 
