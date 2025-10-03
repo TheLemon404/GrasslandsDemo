@@ -1,12 +1,24 @@
 #pragma once
+#include "world/terrain.hpp"
 #include "../graphics/renderer.hpp"
-#include "../graphics/structures/multimesh.hpp"
-#include "structures/environment.hpp"
+#include "world/environment.hpp"
 
 struct Scene {
     Environment environment = {};
     std::vector<Multimesh> meshes;
     std::vector<Instancedmesh> instancedmeshes;
+};
+
+struct GameScene : Scene {
+    GameScene() {
+        meshes.push_back(Renderer::LoadMultimeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl"));
+        meshes.push_back(Renderer::LoadMultimeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl"));
+        meshes[1].transform.scale = glm::vec3(10.0f, 1.0f, 10.0f);
+        meshes[1].transform.position.y -= 2.0f;
+        Terrain terrain = Terrain();
+        terrain.Generate(100, 100);
+        meshes.push_back(terrain);
+    }
 };
 
 struct GraphicsDemoScene : Scene {
@@ -15,22 +27,5 @@ struct GraphicsDemoScene : Scene {
         meshes.push_back(Renderer::LoadMultimeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl"));
         meshes[1].transform.scale = glm::vec3(10.0f, 1.0f, 10.0f);
         meshes[1].transform.position.y -= 2.0f;
-    }
-};
-
-struct GameScene : Scene {
-    GameScene() {
-        std::vector<Transform> transforms;
-        for (int x = -2; x <= 2; x++) {
-            for (int y = -2; y <= 2; y++) {
-                for (int z = -2; z <= 2; z++) {
-                    glm::vec3 pos = glm::vec3(x, y, z) * 2.0f;
-                    transforms.push_back({
-                        .position = pos
-                    });
-                }
-            }
-        }
-        instancedmeshes.push_back(Renderer::LoadInstancedmeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl", transforms));
     }
 };

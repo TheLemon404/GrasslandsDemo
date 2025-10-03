@@ -19,9 +19,9 @@ class Renderer {
 
     Framebuffer shadowFramebuffer;
 
+public:
     static void CreateMeshBuffers(Mesh& mesh);
 
-public:
     Shader opaqueLitShader;
     Shader opaqueInstancedLitShader;
     Shader shadowPassShader;

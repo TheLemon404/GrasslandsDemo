@@ -16,27 +16,41 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glGenVertexArrays(1, &mesh.vao);
     glBindVertexArray(mesh.vao);
 
-    glGenBuffers(1, &mesh.ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
+    if (!mesh.indices.empty()) {
+        glGenBuffers(1, &mesh.ibo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned int), mesh.indices.data(), GL_STATIC_DRAW);
+    }
 
-    glGenBuffers(1, &mesh.vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    if (!mesh.vertices.empty()) {
+        glGenBuffers(1, &mesh.vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+    }
 
-    glGenBuffers(1, &mesh.nbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.nbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh.normals.size() * sizeof(float), mesh.normals.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
+    if (!mesh.normals.empty()) {
+        glGenBuffers(1, &mesh.nbo);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.nbo);
+        glBufferData(GL_ARRAY_BUFFER, mesh.normals.size() * sizeof(float), mesh.normals.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+    }
+    else {
+        glDisableVertexAttribArray(1);
+    }
 
-    glGenBuffers(1, &mesh.uvbo);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.uvbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh.uvs.size() * sizeof(float), mesh.uvs.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(2);
+    if (!mesh.uvs.empty()) {
+        glGenBuffers(1, &mesh.uvbo);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.uvbo);
+        glBufferData(GL_ARRAY_BUFFER, mesh.uvs.size() * sizeof(float), mesh.uvs.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(2);
+    }
+    else {
+        glDisableVertexAttribArray(2);
+    }
 }
 
 Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
@@ -90,7 +104,6 @@ Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
         index_offset += fv;
 
         for (int i = 0; i < shapes[subMeshIndex].mesh.indices.size(); i++) {
-            tinyobj::index_t idx = shapes[subMeshIndex].mesh.indices[i];
             result.indices.push_back(i);
         }
 
@@ -455,6 +468,9 @@ void Renderer::DrawActiveScene() {
         UpdateTransform(multimesh.transform);
 
         for (Mesh& mesh : multimesh.meshes) {
+            if (mesh.vao == 0) {
+                globals.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
+            }
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
@@ -465,7 +481,12 @@ void Renderer::DrawActiveScene() {
             UploadShaderUniformMat4(shadowPassShader.programId, "view", lightView);
             UploadShaderUniformMat4(shadowPassShader.programId, "projection", lightProjection);
 
-            glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            if (!mesh.indices.empty()) {
+                glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            }
+            else {
+                glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size() / 3);
+            }
 
             glUseProgram(0);
             glDisableVertexAttribArray(0);
