@@ -2,22 +2,42 @@
 #include <string>
 
 #include "tiny_obj_loader.h"
-#include "structures/Instancedmesh.hpp"
+#include "structures/instanced_mesh.hpp"
 #include "structures/camera.hpp"
 #include "structures/framebuffer.hpp"
-#include "structures/multimesh.hpp"
 #include "structures/shader.hpp"
+
+static Mesh fullscreenQuad = {
+    .vertices = {
+        0.0f, 0.0f, 0.0f,   // 0
+         1.0f, 0.0f, 0.0f,   // 1
+         1.0f,  1.0f, 0.0f,   // 2
+        0.0f,  1.0f, 0.0f    // 3
+      },
+    .uvs = {
+        0.0f, 0.0f,  // 0
+        1.0f, 0.0f,  // 1
+        1.0f, 1.0f,  // 2
+        0.0f, 1.0f   // 3
+  },
+  .indices = {
+        0, 1, 2,
+        2, 3, 0
+    }
+};
 
 class Renderer {
     void DeleteShader(Shader& shader);
     void LoadShaders();
 
     void UpdateCameraMatrices();
-    static void UpdateTransform(Transform& transform);
+    static void UpdateTransform(TransformComponent& transform);
     void UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform, glm::mat4& view, glm::mat4& projection);
     void UploadMaterialUniforms(Mesh& mesh);
 
     Framebuffer shadowFramebuffer;
+
+    bool isDebugMode = true;
 
 public:
     static void CreateMeshBuffers(Mesh& mesh);
@@ -27,6 +47,7 @@ public:
     Shader shadowPassShader;
     Shader shadowInstancedPassShader;
     Shader postpassShader;
+    Shader fullscreenQuadShader;
 
     Camera camera;
 
@@ -41,8 +62,8 @@ public:
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
     static Mesh LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader);
-    static Multimesh LoadMultimeshAsset(std::string meshAssetPath, std::string materialAssetPath);
-    static Instancedmesh LoadInstancedmeshAsset(std::string meshAssetPath, std::string materialAssetPath, std::vector<Transform> transforms);
+    static Mesh LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath);
+    static InstancedMesh LoadInstancedmeshAsset(std::string meshAssetPath, std::string materialAssetPath, std::vector<TransformComponent> transforms);
 
     static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
     static Framebuffer CreateShadowFramebuffer(unsigned int width, unsigned int height);

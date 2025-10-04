@@ -19,11 +19,13 @@ int main() {
     }
     globals.renderer.Initialize();
 
-    globals.scene = GameScene();
+    globals.scene = GraphicsDemoScene();
+    globals.scene.Start();
 
     while (!globals.window.ShouldClose()) {
         globals.clock.Tick();
 
+        globals.scene.Update();
         globals.scene.environment.sunDirection = glm::rotateY(globals.scene.environment.sunDirection, 0.1f * (float)globals.clock.deltaTime);
 
         globals.renderer.camera.position += (globals.renderer.camera.position - globals.renderer.camera.target) * (-globals.window.mouseProperties.mouseScrollVector.y / 20.0f);
