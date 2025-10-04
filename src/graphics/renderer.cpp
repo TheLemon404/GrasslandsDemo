@@ -390,14 +390,6 @@ Framebuffer Renderer::CreateShadowFramebuffer(unsigned int width, unsigned int h
     return framebuffer;
 }
 
-void Renderer::LoadShaders() {
-    opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
-    opaqueInstancedLitShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
-    shadowPassShader = CreateShader("resources/shaders/shadow_pass.vert", "resources/shaders/shadow_pass.frag");
-    shadowInstancedPassShader = CreateShader("resources/shaders/shadow_instanced_pass.vert", "resources/shaders/shadow_instanced_pass.frag");
-    postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
-}
-
 void Renderer::UpdateCameraMatrices() {
     camera.projection = glm::identity<glm::mat4>();
     camera.projection = glm::perspective<float>(camera.fov, (float)globals.window.width / (float)globals.window.height, camera.near, camera.far);
@@ -435,7 +427,12 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
 }
 
 void Renderer::Initialize() {
-    LoadShaders();
+    opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
+    opaqueInstancedLitShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
+    shadowPassShader = CreateShader("resources/shaders/shadow_pass.vert", "resources/shaders/shadow_pass.frag");
+    shadowInstancedPassShader = CreateShader("resources/shaders/shadow_instanced_pass.vert", "resources/shaders/shadow_instanced_pass.frag");
+    postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
+    fullscreenQuadShader = CreateShader("resources/shaders/fullscreen_quad.vert", "resources/shaders/fullscreen_quad.frag");
 
     shadowFramebuffer = CreateShadowFramebuffer(globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
 
@@ -447,10 +444,18 @@ void Renderer::Initialize() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_MULTISAMPLE);
+
+    //create default objects (fullscreen quad etc...)
+    CreateMeshBuffers(fullscreenQuad);
+    fullscreenQuad.material.texture.id = shadowFramebuffer.depthTexture.id;
+    fullscreenQuad.material.shaderProgramId = globals.renderer.fullscreenQuadShader.programId;
 }
 
 void Renderer::DrawActiveScene() {
     UpdateCameraMatrices();
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     //shadow pass
     glCullFace(GL_BACK);
@@ -458,11 +463,21 @@ void Renderer::DrawActiveScene() {
     glBindFramebuffer(GL_FRAMEBUFFER, shadowFramebuffer.id);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    float near_plane = 1.0f, far_plane = 7.5f;
-    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-    glm::mat4 lightView = glm::lookAt(-globals.scene.environment.sunDirection,
-                                  glm::vec3( 0.0f, 0.0f,  0.0f),
-                                  glm::vec3( 0.0f, 1.0f,  0.0f));
+    float orthoSize = 20.0f;
+    float near_plane = 0.01f;
+    float far_plane  = 10.0f;
+    glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
+    // place the light at some distance in the light direction behind the scene center
+    glm::vec3 sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f); // choose logical scene center or camera target
+    glm::vec3 lightDir = glm::normalize(globals.scene.environment.sunDirection); // direction the sun shines
+    float lightDistance = 5.0f; // tune this so the light is sufficiently far out
+
+    glm::vec3 lightPos = sceneCenter - lightDir * lightDistance; // position the light "behind" the scene
+    glm::vec3 lightTarget = sceneCenter;
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 lightView = glm::lookAt(lightPos, lightTarget, up);
+
 
     for (Multimesh& multimesh : globals.scene.meshes) {
         UpdateTransform(multimesh.transform);
@@ -594,6 +609,32 @@ void Renderer::DrawActiveScene() {
         glUseProgram(0);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+        glBindVertexArray(0);
+    }
+
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+
+    if (isDebugMode) {
+        glBindVertexArray(fullscreenQuad.vao);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(2);
+        glUseProgram(fullscreenQuad.material.shaderProgramId);
+
+        if (fullscreenQuad.material.texture.id != 0) {
+            UploadShaderUniformInt(fullscreenQuad.material.shaderProgramId, "hasBaseTexture", 1);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
+        }
+        else {
+            UploadShaderUniformInt(fullscreenQuad.material.shaderProgramId, "hasBaseTexture", 0);
+        }
+
+        glDrawElements(GL_TRIANGLES, fullscreenQuad.indices.size(), GL_UNSIGNED_INT, 0);
+
+        glUseProgram(0);
+        glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(2);
         glBindVertexArray(0);
     }
