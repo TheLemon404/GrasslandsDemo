@@ -4,5 +4,5 @@
 struct TerrainMeshComponent {
     float heightScale = 1.0f;
     float flatScale = 1.0f;
-    int width = 50, height = 50;
+    int width = 50, length = 50;
 };

@@ -27,7 +27,7 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     if (!mesh.vertices.empty()) {
         glGenBuffers(1, &mesh.vbo);
         glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(float), mesh.vertices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, mesh.GetVerticesRaw().size() * sizeof(float), mesh.GetVerticesRaw().data(), GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
     }
@@ -35,7 +35,7 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     if (!mesh.normals.empty()) {
         glGenBuffers(1, &mesh.nbo);
         glBindBuffer(GL_ARRAY_BUFFER, mesh.nbo);
-        glBufferData(GL_ARRAY_BUFFER, mesh.normals.size() * sizeof(float), mesh.normals.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, mesh.GetNormalsRaw().size() * sizeof(float), mesh.GetNormalsRaw().data(), GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
     }
@@ -46,7 +46,7 @@ void Renderer::CreateMeshBuffers(Mesh& mesh) {
     if (!mesh.uvs.empty()) {
         glGenBuffers(1, &mesh.uvbo);
         glBindBuffer(GL_ARRAY_BUFFER, mesh.uvbo);
-        glBufferData(GL_ARRAY_BUFFER, mesh.uvs.size() * sizeof(float), mesh.uvs.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, mesh.GetUvsRaw().size() * sizeof(float), mesh.GetUvsRaw().data(), GL_STATIC_DRAW);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(2);
     }
@@ -76,26 +76,21 @@ Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
             tinyobj::real_t vy = attrib.vertices[3*size_t(idx.vertex_index)+1];
             tinyobj::real_t vz = attrib.vertices[3*size_t(idx.vertex_index)+2];
 
-            result.vertices.push_back(vx);
-            result.vertices.push_back(vy);
-            result.vertices.push_back(vz);
+            result.vertices.push_back({vx, vy, vz});
 
             // Check if `normal_index` is zero or positive. negative = no normal data
             if (idx.normal_index >= 0) {
                 tinyobj::real_t nx = attrib.normals[3*size_t(idx.normal_index)+0];
                 tinyobj::real_t ny = attrib.normals[3*size_t(idx.normal_index)+1];
                 tinyobj::real_t nz = attrib.normals[3*size_t(idx.normal_index)+2];
-                result.normals.push_back(nx);
-                result.normals.push_back(ny);
-                result.normals.push_back(nz);
+                result.normals.push_back({nx, ny, nz});
             }
 
             // Check if `texcoord_index` is zero or positive. negative = no texcoord data
             if (idx.texcoord_index >= 0) {
                 tinyobj::real_t tx = attrib.texcoords[2*size_t(idx.texcoord_index)+0];
                 tinyobj::real_t ty = attrib.texcoords[2*size_t(idx.texcoord_index)+1];
-                result.uvs.push_back(tx);
-                result.uvs.push_back(ty);
+                result.uvs.push_back({tx, ty});
             }
 
             // Optional: vertex colors
@@ -150,40 +145,6 @@ Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAsse
 
     globals.logger.Log("successfully loaded obj file: " + meshAssetPath);
     return meshes[0];
-}
-
-InstancedMesh Renderer::LoadInstancedmeshAsset(std::string meshAssetPath, std::string materialAssetPath, std::vector<TransformComponent> transforms) {
-    tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = materialAssetPath.c_str();
-
-    tinyobj::ObjReader reader;
-
-    if (!reader.ParseFromFile(meshAssetPath.c_str(), reader_config)) {
-        if (!reader.Error().empty()) {
-            globals.logger.ThrowRuntimeError("TinyObjReader: " + reader.Error());
-        }
-        exit(1);
-    }
-
-    if (!reader.Warning().empty()) {
-        globals.logger.Log("TinyObjReader: " + reader.Warning());
-    }
-
-    Mesh mesh = LoadMeshSubAsset(0, reader);
-
-    for (int i = 0; i < transforms.size(); i++) {
-        UpdateTransform(transforms[i]);
-    }
-
-    CreateMeshBuffers(mesh);
-    mesh.material.shaderProgramId = globals.renderer.opaqueInstancedLitShader.programId;
-
-    InstancedMesh result = {
-        .mesh = mesh,
-        .transforms = transforms
-    };
-
-    return result;
 }
 
 void Renderer::RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin) {
@@ -293,7 +254,7 @@ void Renderer::DeleteShader(Shader& shader) {
     glDeleteProgram(shader.programId);
 }
 
-Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height) {
+Framebuffer Renderer::CreateFramebuffer(int width, int height) {
     Framebuffer framebuffer = {
         .colorTexture = {
             .width = width,
@@ -312,7 +273,8 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
         },
         .depthStencilRenderbuffer = {
             .width = width,
-            .height = height}
+            .height = height
+        }
     };
 
     glGenFramebuffers(1, &framebuffer.id);
@@ -362,7 +324,7 @@ Framebuffer Renderer::CreateFramebuffer(unsigned int width, unsigned int height)
     return framebuffer;
 }
 
-Framebuffer Renderer::CreateShadowFramebuffer(unsigned int width, unsigned int height) {
+Framebuffer Renderer::CreateShadowFramebuffer(int width, int height) {
     Framebuffer framebuffer = {
         .depthTexture = {
             .width = width,
@@ -419,22 +381,20 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shaderProgramId, "albedo", mesh.material.albedo);
     UploadShaderUniformFloat(mesh.material.shaderProgramId, "roughness", mesh.material.roughness);
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "haseBaseTexture", 0);
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "hasBaseTexture", 0);
     }
     else {
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "haseBaseTexture", 0);
-        glActiveTexture(GL_TEXTURE0);
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "hasBaseTexture", 1);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, mesh.material.texture.id);
     }
 }
 
 void Renderer::Initialize() {
     opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
-    opaqueInstancedLitShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
-    shadowPassShader = CreateShader("resources/shaders/shadow_pass.vert", "resources/shaders/shadow_pass.frag");
-    shadowInstancedPassShader = CreateShader("resources/shaders/shadow_instanced_pass.vert", "resources/shaders/shadow_instanced_pass.frag");
     postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
     fullscreenQuadShader = CreateShader("resources/shaders/fullscreen_quad.vert", "resources/shaders/fullscreen_quad.frag");
+    terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag");
 
     shadowFramebuffer = CreateShadowFramebuffer(globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
 
@@ -468,7 +428,7 @@ void Renderer::DrawActiveScene() {
     //"dynamic" shadow pass (this desperately needs to be re-done.
     float orthoSize = 20.0f;
     float near_plane = 0.01f;
-    float far_plane  = 20.0f;
+    float far_plane  = 40.0f;
     glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
     // place the light at some distance in the light direction behind the scene center
     glm::vec3 sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f); // choose logical scene center or camera target
@@ -485,62 +445,40 @@ void Renderer::DrawActiveScene() {
         UpdateTransform(transform);
         Mesh mesh = globals.scene.registry.get<MeshComponent>(entity).mesh;
 
-        if (mesh.shadowCullFace == 0) {
-            glCullFace(GL_BACK);
+        if (mesh.castsShadow) {
+            if (mesh.shadowCullFace == 0) {
+                glCullFace(GL_BACK);
+            }
+            else {
+                glCullFace(GL_FRONT);
+            }
+
+            if (mesh.vao == 0) {
+                globals.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
+            }
+            glBindVertexArray(mesh.vao);
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glUseProgram(mesh.material.shaderProgramId);
+
+            UploadShaderUniformMat4(mesh.material.shaderProgramId, "transform", transform.matrix);
+            UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
+            UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
+
+            if (!mesh.indices.empty()) {
+                glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            }
+            else {
+                glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size() / 3);
+            }
+
+            glUseProgram(0);
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
+            glBindVertexArray(0);
         }
-        else {
-            glCullFace(GL_FRONT);
-        }
-
-        if (mesh.vao == 0) {
-            globals.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
-        }
-        glBindVertexArray(mesh.vao);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glUseProgram(shadowPassShader.programId);
-
-        UploadShaderUniformMat4(shadowPassShader.programId, "transform", transform.matrix);
-        UploadShaderUniformMat4(shadowPassShader.programId, "view", lightView);
-        UploadShaderUniformMat4(shadowPassShader.programId, "projection", lightProjection);
-
-        if (!mesh.indices.empty()) {
-            glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
-        }
-        else {
-            glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size() / 3);
-        }
-
-        glUseProgram(0);
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(2);
-        glBindVertexArray(0);
-    }
-
-    for (InstancedMesh instancedmesh : globals.scene.instancedmeshes) {
-        glBindVertexArray(instancedmesh.mesh.vao);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glUseProgram(shadowInstancedPassShader.programId);
-
-        for (int i = 0; i < instancedmesh.transforms.size(); i++) {
-            UpdateTransform(instancedmesh.transforms[i]);
-            UploadShaderUniformMat4(shadowInstancedPassShader.programId, "transforms[" + std::to_string(i) + "]", instancedmesh.transforms[i].matrix);
-        }
-
-        UploadShaderUniformMat4(shadowInstancedPassShader.programId, "view", lightView);
-        UploadShaderUniformMat4(shadowInstancedPassShader.programId, "projection", lightProjection);
-
-        glDrawElementsInstanced(GL_TRIANGLES, instancedmesh.mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedmesh.transforms.size());
-
-        glUseProgram(0);
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(2);
-        glBindVertexArray(0);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -566,6 +504,14 @@ void Renderer::DrawActiveScene() {
         glEnableVertexAttribArray(2);
         glUseProgram(mesh.material.shaderProgramId);
 
+        //IMPORTANT: this is where we can insert custom shader uniforms into the render function, through systems
+        globals.scene.InsertDrawLogic(mesh);
+
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
+        if (mesh.material.texture.id != 0) {
+            UploadShaderUniformInt(mesh.material.shaderProgramId, "baseTexture", 2);
+        }
+
         UploadMesh3DMatrices(mesh, transform.matrix, camera.view, camera.projection);
         UploadMaterialUniforms(mesh);
 
@@ -577,7 +523,7 @@ void Renderer::DrawActiveScene() {
         UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
         UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightView", lightView);
         UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightProjection", lightProjection);
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
         glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
@@ -591,42 +537,6 @@ void Renderer::DrawActiveScene() {
         if (!mesh.cullBackface) {
             glEnable(GL_CULL_FACE);
         }
-    }
-
-    for (InstancedMesh instancedmesh : globals.scene.instancedmeshes) {
-        glBindVertexArray(instancedmesh.mesh.vao);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glUseProgram(instancedmesh.mesh.material.shaderProgramId);
-
-        for (int i = 0; i < instancedmesh.transforms.size(); i++) {
-            UpdateTransform(instancedmesh.transforms[i]);
-            UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "transforms[" + std::to_string(i) + "]", instancedmesh.transforms[i].matrix);
-        }
-
-        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "view", camera.view);
-        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "projection", camera.projection);
-        UploadMaterialUniforms(instancedmesh.mesh);
-
-        //upload environment data
-        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "sunDirection", globals.scene.environment.sunDirection);
-        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "sunColor", globals.scene.environment.sunColor);
-        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
-        UploadShaderUniformVec3(instancedmesh.mesh.material.shaderProgramId, "cameraPosition", camera.position);
-        UploadShaderUniformFloat(instancedmesh.mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
-        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "lightView", lightView);
-        UploadShaderUniformMat4(instancedmesh.mesh.material.shaderProgramId, "lightProjection", lightProjection);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
-
-        glDrawElementsInstanced(GL_TRIANGLES, instancedmesh.mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedmesh.transforms.size());
-
-        glUseProgram(0);
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(2);
-        glBindVertexArray(0);
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -658,8 +568,7 @@ void Renderer::DrawActiveScene() {
 
 void Renderer::CleanUp() {
     DeleteShader(opaqueLitShader);
-    DeleteShader(opaqueInstancedLitShader);
-    DeleteShader(shadowPassShader);
-    DeleteShader(shadowInstancedPassShader);
     DeleteShader(postpassShader);
+    DeleteShader(fullscreenQuadShader);
+    DeleteShader(terrainShader);
 }

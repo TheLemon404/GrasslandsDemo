@@ -9,16 +9,16 @@
 
 static Mesh fullscreenQuad = {
     .vertices = {
-        0.0f, 0.0f, 0.0f,   // 0
-         1.0f, 0.0f, 0.0f,   // 1
-         1.0f,  1.0f, 0.0f,   // 2
-        0.0f,  1.0f, 0.0f    // 3
+        {0.0f, 0.0f, 0.0f},   // 0
+         {1.0f, 0.0f, 0.0f},   // 1
+         {1.0f,  1.0f, 0.0f},   // 2
+        {0.0f,  1.0f, 0.0f}    // 3
       },
     .uvs = {
-        0.0f, 0.0f,  // 0
-        1.0f, 0.0f,  // 1
-        1.0f, 1.0f,  // 2
-        0.0f, 1.0f   // 3
+        {0.0f, 0.0f},  // 0
+        {1.0f, 0.0},  // 1
+        {1.0f, 1.0f},  // 2
+        {0.0f, 1.0f}  // 3
   },
   .indices = {
         0, 1, 2,
@@ -37,17 +37,15 @@ class Renderer {
 
     Framebuffer shadowFramebuffer;
 
-    bool isDebugMode = true;
+    bool isDebugMode = false;
 
 public:
     static void CreateMeshBuffers(Mesh& mesh);
 
     Shader opaqueLitShader;
-    Shader opaqueInstancedLitShader;
-    Shader shadowPassShader;
-    Shader shadowInstancedPassShader;
     Shader postpassShader;
     Shader fullscreenQuadShader;
+    Shader terrainShader;
 
     Camera camera;
 
@@ -63,10 +61,9 @@ public:
 
     static Mesh LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader);
     static Mesh LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath);
-    static InstancedMesh LoadInstancedmeshAsset(std::string meshAssetPath, std::string materialAssetPath, std::vector<TransformComponent> transforms);
 
-    static Framebuffer CreateFramebuffer(unsigned int width, unsigned int height);
-    static Framebuffer CreateShadowFramebuffer(unsigned int width, unsigned int height);
+    static Framebuffer CreateFramebuffer(int width, int height);
+    static Framebuffer CreateShadowFramebuffer(int width, int height);
 
     void Initialize();
     void DrawActiveScene();

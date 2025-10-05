@@ -11,3 +11,10 @@ void Scene::Update() {
         system->Update(registry);
     }
 }
+
+void Scene::InsertDrawLogic(Mesh& mesh) {
+    for (std::shared_ptr<System> system : systems) {
+        system->InsertDrawLogic(mesh);
+    }
+}
+

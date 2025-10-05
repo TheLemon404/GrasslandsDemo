@@ -1,5 +1,6 @@
 #pragma once
 
 struct Renderbuffer {
-    unsigned int id, width, height;
+    unsigned int id;
+    int width, height;
 };

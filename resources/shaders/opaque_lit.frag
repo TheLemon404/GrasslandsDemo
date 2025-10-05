@@ -5,17 +5,17 @@ layout (location = 1) in vec3 pNormal;
 layout (location = 2) in vec2 pUV;
 layout (location = 3) in vec4 fragPosLightSpace;
 
-uniform vec3 albedo;
-uniform float roughness;
-uniform sampler2D baseTexture;
-uniform int hasBaseTexture;
-
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
 uniform vec3 shadowColor;
 uniform float blurDistance;
 uniform vec3 cameraPosition;
 uniform sampler2D shadowMap;
+
+uniform vec3 albedo;
+uniform float roughness;
+uniform sampler2D baseTexture;
+uniform int hasBaseTexture;
 
 layout (location = 0) out vec4 fragColor;
 
@@ -72,4 +72,5 @@ void main() {
     vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
     vec4 final = vec4(lighting, 1.0f);
     fragColor = final;
+    gl_FragDepth = gl_FragCoord.z;
 }
