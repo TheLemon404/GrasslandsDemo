@@ -1,7 +1,7 @@
 #version 410 core
 
 layout (location = 0) in vec3 pPosition;
-layout (location = 1) in vec3 fragWorldPos;
+layout (location = 1) in vec3 pNormal;
 layout (location = 2) in vec2 pUV;
 layout (location = 3) in vec4 fragPosLightSpace;
 
@@ -60,7 +60,7 @@ void main() {
 
     float depth = distance(cameraPosition, pPosition);
 
-    vec3 normal = normalize(cross(dFdx(fragWorldPos), dFdy(fragWorldPos)));
+    vec3 normal = normalize(cross(dFdx(pPosition), dFdy(pPosition)));
 
     vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.0f) * sunColor;
 

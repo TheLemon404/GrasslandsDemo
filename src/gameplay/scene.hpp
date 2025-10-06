@@ -18,7 +18,7 @@ struct Scene {
 
     void Start();
     void Update();
-    void InsertDrawLogic(Mesh& mesh);
+    void InsertDrawLogic(Mesh& mesh, entt::entity& entity);
 };
 
 struct GraphicsDemoScene : Scene {
@@ -27,7 +27,7 @@ struct GraphicsDemoScene : Scene {
         TransformComponent& transform = registry.emplace<TransformComponent>(ent);
         MeshComponent& mesh = registry.emplace<MeshComponent>(ent);
         mesh.mesh = Renderer::LoadMeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl");
-        transform.position.y = 3.0f;
+        transform.position.y = 5.0f;
 
         entt::entity ent2 = registry.create();
         registry.emplace<TransformComponent>(ent2);

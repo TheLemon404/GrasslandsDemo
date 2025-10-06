@@ -4,5 +4,5 @@ struct Settings {
     float mouseSensitivityMultiplier = 0.005f;
     float blurDistance = 30.0f;
     int msaaSamples = 4;
-    int shadowFramebufferResolution = 1024;
+    int shadowFramebufferResolution = 2048;
 };

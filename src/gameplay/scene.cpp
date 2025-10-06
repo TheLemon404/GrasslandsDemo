@@ -12,9 +12,9 @@ void Scene::Update() {
     }
 }
 
-void Scene::InsertDrawLogic(Mesh& mesh) {
+void Scene::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
     for (std::shared_ptr<System> system : systems) {
-        system->InsertDrawLogic(mesh);
+        system->InsertDrawLogic(mesh, entity);
     }
 }
 

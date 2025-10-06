@@ -7,5 +7,5 @@ struct Mesh;
 struct System {
     virtual void Start(entt::registry& registry) = 0;
     virtual void Update(entt::registry& registry) = 0;
-    virtual void InsertDrawLogic(Mesh& mesh) = 0;
+    virtual void InsertDrawLogic(Mesh& mesh, entt::entity& entity) = 0;
 };

@@ -14,6 +14,8 @@ int main() {
     globals.clock = Clock();
     globals.settings = Settings();
 
+    quilCreateWindowContext(globals.window.glfwWindow);
+
     if (!globals.window.Initialize(1200, 800, "Chess3D")) {
         return -1;
     }
@@ -30,6 +32,10 @@ int main() {
 
         globals.renderer.camera.position += (globals.renderer.camera.position - globals.renderer.camera.target) * (-globals.window.mouseProperties.mouseScrollVector.y / 20.0f);
 
+        if (quilIsKeyPressed(GLFW_KEY_X)) {
+            globals.renderer.isDebugMode = !globals.renderer.isDebugMode;
+        }
+
         if (quilIsMouseButtonPressed(GLFW_MOUSE_BUTTON_1)) {
             glm::vec3 cameraForward = glm::normalize(globals.renderer.camera.target - globals.renderer.camera.position);
             glm::vec3 cameraRight = glm::normalize(glm::cross(globals.renderer.camera.up, cameraForward));
@@ -39,6 +45,8 @@ int main() {
         }
 
         globals.renderer.DrawActiveScene();
+
+        quilPollCallbacks();
 
         globals.window.RefreshAndPoll();
     }

@@ -2,7 +2,9 @@
 #include "mesh_component.hpp"
 
 struct TerrainMeshComponent {
-    float heightScale = 1.0f;
-    float flatScale = 1.0f;
-    int width = 50, length = 50;
+    float maxHeight = 5.0f;
+    glm::ivec2 dimensions = glm::ivec2(50);
+    glm::ivec2 resolution = glm::ivec2(250);
+
+    Texture heightMapTexture;
 };

@@ -428,7 +428,7 @@ void Renderer::DrawActiveScene() {
     //"dynamic" shadow pass (this desperately needs to be re-done.
     float orthoSize = 20.0f;
     float near_plane = 0.01f;
-    float far_plane  = 40.0f;
+    float far_plane  = 100.0f;
     glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
     // place the light at some distance in the light direction behind the scene center
     glm::vec3 sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f); // choose logical scene center or camera target
@@ -505,7 +505,7 @@ void Renderer::DrawActiveScene() {
         glUseProgram(mesh.material.shaderProgramId);
 
         //IMPORTANT: this is where we can insert custom shader uniforms into the render function, through systems
-        globals.scene.InsertDrawLogic(mesh);
+        globals.scene.InsertDrawLogic(mesh, entity);
 
         UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
         if (mesh.material.texture.id != 0) {

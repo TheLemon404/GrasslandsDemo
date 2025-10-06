@@ -3,17 +3,12 @@
 #include "../../globals.hpp"
 #include "../components/mesh_component.hpp"
 #include "../components/terrain_mesh_component.hpp"
-
-float generateRandomFloat(float min, float max) {
-    // Seed the random number generator (do this once at the start of your program)
-    // srand(time(0));
-    return min + static_cast<float>(rand()) / static_cast<float>(RAND_MAX / (max - min));
-}
+#include "glad/glad.h"
 
 void TerrainSystem::Start(entt::registry& registry) {
     auto view = registry.view<MeshComponent, TerrainMeshComponent>();
     for (auto& entity : view) {
-        TerrainMeshComponent terrain = registry.get<TerrainMeshComponent>(entity);
+        TerrainMeshComponent& terrain = registry.get<TerrainMeshComponent>(entity);
         Mesh& mesh = registry.get<MeshComponent>(entity).mesh;
         mesh.vertices.clear();
         mesh.indices.clear();
@@ -21,26 +16,26 @@ void TerrainSystem::Start(entt::registry& registry) {
         mesh.normals.clear();
 
         // Build vertex positions and uvs
-        for (int i = 0; i < terrain.width; ++i) {
-            for (int j = 0; j < terrain.length; ++j) {
-                float x = static_cast<float>(i) - terrain.width / 2;
-                float z = static_cast<float>(j) - terrain.length / 2;
-                mesh.vertices.push_back({x * terrain.flatScale, 0.0f, z * terrain.flatScale});
+        for (int i = 0; i < terrain.resolution.x; ++i) {
+            for (int j = 0; j < terrain.resolution.y; ++j) {
+                float x = static_cast<float>(i) - terrain.resolution.x / 2;
+                float z = static_cast<float>(j) - terrain.resolution.y / 2;
+                mesh.vertices.push_back({x * ((float)terrain.dimensions.x / terrain.resolution.x), 0.0f, z * ((float)terrain.dimensions.y / terrain.resolution.y)});
 
                 //this is not actually used in the shader (we calculate the normals again in the fragment shader
                 mesh.normals.push_back({0.0f, 1.0f, 0.0f});
 
                 // uv 0..1 over grid
-                mesh.uvs.push_back({static_cast<float>(i) / (terrain.width - 1), static_cast<float>(j) / (terrain.length - 1)});
+                mesh.uvs.push_back({static_cast<float>(i) / (terrain.resolution.x - 1), static_cast<float>(j) / (terrain.resolution.y - 1)});
             }
         }
 
         // Build indices: two triangles per quad
-        for (int i = 0; i < terrain.width - 1; ++i) {
-            for (int j = 0; j < terrain.length - 1; ++j) {
-                unsigned int topLeft     = static_cast<unsigned int>(i * terrain.length + j);
+        for (int i = 0; i < terrain.resolution.x - 1; ++i) {
+            for (int j = 0; j < terrain.resolution.y - 1; ++j) {
+                unsigned int topLeft     = static_cast<unsigned int>(i * terrain.resolution.y + j);
                 unsigned int topRight    = topLeft + 1;
-                unsigned int bottomLeft  = static_cast<unsigned int>((i + 1) * terrain.length + j);
+                unsigned int bottomLeft  = static_cast<unsigned int>((i + 1) * terrain.resolution.y + j);
                 unsigned int bottomRight = bottomLeft + 1;
 
                 // Correct terrain indices for CCW (OpenGL default)
@@ -66,12 +61,12 @@ void TerrainSystem::Start(entt::registry& registry) {
         }
 
         mesh.cullBackface = false;
-        mesh.castsShadow = false;
+
+        terrain.heightMapTexture = Texture::LoadTextureFromFile("resources/textures/th.png", 3);
 
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shaderProgramId = globals.renderer.terrainShader.programId;
         mesh.material.albedo = glm::vec3(0.4f, 0.9f, 0.5f);
-        mesh.material.texture = Texture::LoadTextureFromFile("resources/textures/th.png", 3);
         mesh.material.roughness = 1.0f;
     }
 }
@@ -80,8 +75,15 @@ void TerrainSystem::Update(entt::registry& registry) {
 
 }
 
-void TerrainSystem::InsertDrawLogic(Mesh& mesh) {
-    Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
-    Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", 2.0f);
+void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
+    if (globals.scene.registry.try_get<TerrainMeshComponent>(entity)) {
+        TerrainMeshComponent terrain = globals.scene.registry.get<TerrainMeshComponent>(entity);
+
+        Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
+    }
 }
 

@@ -37,9 +37,9 @@ class Renderer {
 
     Framebuffer shadowFramebuffer;
 
+public:
     bool isDebugMode = false;
 
-public:
     static void CreateMeshBuffers(Mesh& mesh);
 
     Shader opaqueLitShader;
