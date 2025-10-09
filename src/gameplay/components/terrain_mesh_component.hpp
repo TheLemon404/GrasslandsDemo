@@ -4,7 +4,9 @@
 struct TerrainMeshComponent {
     float maxHeight = 5.0f;
     glm::ivec2 dimensions = glm::ivec2(50);
-    glm::ivec2 resolution = glm::ivec2(250);
+    glm::ivec2 resolution = glm::ivec2(200);
 
     Texture heightMapTexture;
+
+    int grassBlades = 1000;
 };

@@ -4,7 +4,7 @@ layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aUV;
 
-uniform mat4 transform;
+uniform mat4 transforms[250];
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightView;
@@ -17,10 +17,10 @@ layout (location = 3) out vec4 fragPosLightSpace;
 
 void main()
 {
-    mat3 normalMatrix = mat3(transpose(inverse(transform)));
-    gl_Position = projection * view * transform * vec4(aPosition, 1.0f);
+    mat3 normalMatrix = mat3(transpose(inverse(transforms[gl_InstanceID])));
+    gl_Position = projection * view * transforms[gl_InstanceID] * vec4(aPosition, 1.0f);
     pNormal = normalize(normalMatrix * aNormal).xyz;
     pUV = aUV;
-    pPosition = (transform * vec4(aPosition, 1.0f)).xyz;
-    fragPosLightSpace = lightProjection * lightView * transform * vec4(aPosition, 1.0f);
+    pPosition = (transforms[gl_InstanceID] * vec4(aPosition, 1.0f)).xyz;
+    fragPosLightSpace = lightProjection * lightView * transforms[gl_InstanceID] * vec4(aPosition, 1.0f);
 }

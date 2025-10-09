@@ -5,17 +5,17 @@ layout (location = 1) in vec3 pNormal;
 layout (location = 2) in vec2 pUV;
 layout (location = 3) in vec4 fragPosLightSpace;
 
+uniform vec3 albedo;
+uniform float roughness;
+uniform sampler2D baseTexture;
+uniform int hasBaseTexture;
+
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
 uniform vec3 shadowColor;
 uniform float blurDistance;
 uniform vec3 cameraPosition;
 uniform sampler2D shadowMap;
-
-uniform vec3 albedo;
-uniform float roughness;
-uniform sampler2D baseTexture;
-uniform int hasBaseTexture;
 
 layout (location = 0) out vec4 fragColor;
 
@@ -40,7 +40,9 @@ float shadowCalculation() {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += (currentDepth > pcfDepth + bias) ? 1.0 : 0.0;
         }
+
     }
+
     shadow /= 9.0;
 
     if(projCoords.z > 1.0) shadow = 0.0;

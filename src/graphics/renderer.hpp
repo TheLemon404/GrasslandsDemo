@@ -2,7 +2,8 @@
 #include <string>
 
 #include "tiny_obj_loader.h"
-#include "structures/instanced_mesh.hpp"
+#include "../gameplay/components/transform_component.hpp"
+#include "structures/mesh.hpp"
 #include "structures/camera.hpp"
 #include "structures/framebuffer.hpp"
 #include "structures/shader.hpp"
@@ -31,8 +32,7 @@ class Renderer {
     void LoadShaders();
 
     void UpdateCameraMatrices();
-    static void UpdateTransform(TransformComponent& transform);
-    void UploadMesh3DMatrices(Mesh& mesh, glm::mat4& transform, glm::mat4& view, glm::mat4& projection);
+    static void UpdateTransform(Transform& transform);
     void UploadMaterialUniforms(Mesh& mesh);
 
     Framebuffer shadowFramebuffer;
@@ -43,6 +43,7 @@ public:
     static void CreateMeshBuffers(Mesh& mesh);
 
     Shader opaqueLitShader;
+    Shader opaqueLitInstancedShader;
     Shader postpassShader;
     Shader fullscreenQuadShader;
     Shader terrainShader;
@@ -60,7 +61,7 @@ public:
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
     static Mesh LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader);
-    static Mesh LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath);
+    static Mesh LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath, bool instanced);
 
     static Framebuffer CreateFramebuffer(int width, int height);
     static Framebuffer CreateShadowFramebuffer(int width, int height);

@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 #include "components/terrain_mesh_component.hpp"
 #include "../graphics/renderer.hpp"
+#include "components/instanced_mesh_component.hpp"
 #include "components/mesh_component.hpp"
 #include "systems/system.hpp"
 #include "systems/terrain_system.hpp"
@@ -12,7 +13,6 @@ struct GameObject;
 
 struct Scene {
     Environment environment = {};
-    std::vector<InstancedMesh> instancedmeshes;
     entt::registry registry;
     std::vector<std::shared_ptr<System>> systems;
 
@@ -24,15 +24,16 @@ struct Scene {
 struct GraphicsDemoScene : Scene {
     GraphicsDemoScene() {
         entt::entity ent = registry.create();
-        TransformComponent& transform = registry.emplace<TransformComponent>(ent);
+        TransformComponent& transformComponent = registry.emplace<TransformComponent>(ent);
         MeshComponent& mesh = registry.emplace<MeshComponent>(ent);
-        mesh.mesh = Renderer::LoadMeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl");
-        transform.position.y = 5.0f;
+        mesh.mesh = Renderer::LoadMeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl", false);
+        transformComponent.transform.position.y = 5.0f;
 
-        entt::entity ent2 = registry.create();
-        registry.emplace<TransformComponent>(ent2);
-        registry.emplace<MeshComponent>(ent2);
-        registry.emplace<TerrainMeshComponent>(ent2);
+        entt::entity terrain = registry.create();
+        registry.emplace<TransformComponent>(terrain);
+        registry.emplace<MeshComponent>(terrain);
+        registry.emplace<TerrainMeshComponent>(terrain);
+        registry.emplace<InstancedMeshComponent>(terrain);
 
         systems.push_back(std::make_unique<TerrainSystem>());
     }

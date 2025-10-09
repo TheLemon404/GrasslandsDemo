@@ -60,14 +60,26 @@ void TerrainSystem::Start(entt::registry& registry) {
             }
         }
 
-        mesh.cullBackface = false;
-
         terrain.heightMapTexture = Texture::LoadTextureFromFile("resources/textures/th.png", 3);
 
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shaderProgramId = globals.renderer.terrainShader.programId;
         mesh.material.albedo = glm::vec3(0.4f, 0.9f, 0.5f);
         mesh.material.roughness = 1.0f;
+
+        //creating the grass blades
+        InstancedMeshComponent& grassInstancedMesh = registry.get<InstancedMeshComponent>(entity);
+        grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
+        grassInstancedMesh.mesh.material.albedo = glm::vec3(0.3f, 1.0f, 0.6f);
+        grassInstancedMesh.mesh.cullBackface = false;
+        grassInstancedMesh.mesh.castsShadow = false;
+        for (int x = 0; x < sqrt(terrain.grassBlades); x++) {
+            for (int z = 0; z < sqrt(terrain.grassBlades); z++) {
+                Transform t = {};
+                t.position = {x * ((float)terrain.dimensions.x) / sqrt(terrain.grassBlades), 0.0f,  z * ((float)terrain.dimensions.y / sqrt(terrain.grassBlades))};
+                grassInstancedMesh.transforms.push_back(t);
+            }
+        }
     }
 }
 

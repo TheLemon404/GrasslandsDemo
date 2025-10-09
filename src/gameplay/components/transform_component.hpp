@@ -1,11 +1,9 @@
 #pragma once
 #include "fwd.hpp"
 #include "vec3.hpp"
+#include "../../graphics/structures/transform.hpp"
 #include "ext/matrix_transform.hpp"
 
 struct TransformComponent {
-    glm::vec3 position = {};
-    glm::vec3 rotation = {};
-    glm::vec3 scale = {1.0f, 1.0f, 1.0f};
-    glm::mat4 matrix = glm::identity<glm::mat4>();
+    Transform transform;
 };

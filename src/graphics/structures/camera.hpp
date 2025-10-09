@@ -9,7 +9,7 @@ struct Camera {
 
     float fov = 70.0f;
     float near = 0.01f;
-    float far = 100.0f;
+    float far = 1000.0f;
 
     glm::mat4 view;
     glm::mat4 projection;
