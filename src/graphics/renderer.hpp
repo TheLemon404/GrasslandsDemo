@@ -31,13 +31,13 @@ class Renderer {
     void DeleteShader(Shader& shader);
     void LoadShaders();
 
+    Framebuffer shadowFramebuffer;
+
+public:
     void UpdateCameraMatrices();
     static void UpdateTransform(Transform& transform);
     void UploadMaterialUniforms(Mesh& mesh);
 
-    Framebuffer shadowFramebuffer;
-
-public:
     bool isDebugMode = false;
 
     static void CreateMeshBuffers(Mesh& mesh);
@@ -47,6 +47,7 @@ public:
     Shader postpassShader;
     Shader fullscreenQuadShader;
     Shader terrainShader;
+    Shader grassInstancedShader;
 
     Camera camera;
 

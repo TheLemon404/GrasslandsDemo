@@ -2,13 +2,13 @@
 
 #include "../../globals.hpp"
 #include "../components/mesh_component.hpp"
-#include "../components/terrain_mesh_component.hpp"
+#include "../components/terrain_component.hpp"
 #include "glad/glad.h"
 
 void TerrainSystem::Start(entt::registry& registry) {
-    auto view = registry.view<MeshComponent, TerrainMeshComponent>();
+    auto view = registry.view<MeshComponent, TerrainComponent>();
     for (auto& entity : view) {
-        TerrainMeshComponent& terrain = registry.get<TerrainMeshComponent>(entity);
+        TerrainComponent& terrain = registry.get<TerrainComponent>(entity);
         Mesh& mesh = registry.get<MeshComponent>(entity).mesh;
         mesh.vertices.clear();
         mesh.indices.clear();
@@ -71,15 +71,51 @@ void TerrainSystem::Start(entt::registry& registry) {
         InstancedMeshComponent& grassInstancedMesh = registry.get<InstancedMeshComponent>(entity);
         grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
         grassInstancedMesh.mesh.material.albedo = glm::vec3(0.3f, 1.0f, 0.6f);
+        grassInstancedMesh.mesh.material.shaderProgramId = globals.renderer.grassInstancedShader.programId;
         grassInstancedMesh.mesh.cullBackface = false;
         grassInstancedMesh.mesh.castsShadow = false;
-        for (int x = 0; x < sqrt(terrain.grassBlades); x++) {
-            for (int z = 0; z < sqrt(terrain.grassBlades); z++) {
+        grassInstancedMesh.mesh.receivesShadow = false;
+
+        for (int i = 0; i < sqrt(terrain.grassBlades); i++) {
+            for (int j = 0; j < sqrt(terrain.grassBlades); j++) {
                 Transform t = {};
-                t.position = {x * ((float)terrain.dimensions.x) / sqrt(terrain.grassBlades), 0.0f,  z * ((float)terrain.dimensions.y / sqrt(terrain.grassBlades))};
+                float x = static_cast<float>(i) - sqrt(terrain.grassBlades) / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+                float z = static_cast<float>(j) - sqrt(terrain.grassBlades) / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+                t.rotation.y = static_cast<float>(rand());
+                t.position = {x * (float)terrain.dimensions.x / sqrt(terrain.grassBlades), 1.0f,  z * (float)terrain.dimensions.y / sqrt(terrain.grassBlades)};
+                Renderer::UpdateTransform(t);
                 grassInstancedMesh.transforms.push_back(t);
             }
         }
+
+        //collect the matricies from the transforms objects
+        std::vector<glm::mat4> matrices;
+        for (Transform& t : grassInstancedMesh.transforms) {
+            matrices.push_back(t.matrix);
+        }
+
+        glGenBuffers(1, &grassInstancedMesh.instancedVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, grassInstancedMesh.instancedVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * grassInstancedMesh.transforms.size(), &matrices[0], GL_STATIC_DRAW);
+
+        std::size_t vec4size = sizeof(glm::vec4);
+        glBindVertexArray(grassInstancedMesh.mesh.vao);
+
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)0);
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(1 * vec4size));
+        glEnableVertexAttribArray(5);
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(2 * vec4size));
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(3 * vec4size));
+
+        glVertexAttribDivisor(3, 1);
+        glVertexAttribDivisor(4, 1);
+        glVertexAttribDivisor(5, 1);
+        glVertexAttribDivisor(6, 1);
+
+        glBindVertexArray(0);
     }
 }
 
@@ -88,8 +124,8 @@ void TerrainSystem::Update(entt::registry& registry) {
 }
 
 void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
-    if (globals.scene.registry.try_get<TerrainMeshComponent>(entity)) {
-        TerrainMeshComponent terrain = globals.scene.registry.get<TerrainMeshComponent>(entity);
+    if (globals.scene.registry.try_get<TerrainComponent>(entity)) {
+        TerrainComponent terrain = globals.scene.registry.get<TerrainComponent>(entity);
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);

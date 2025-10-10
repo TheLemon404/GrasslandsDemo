@@ -1,7 +1,7 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "components/terrain_mesh_component.hpp"
+#include "components/terrain_component.hpp"
 #include "../graphics/renderer.hpp"
 #include "components/instanced_mesh_component.hpp"
 #include "components/mesh_component.hpp"
@@ -18,7 +18,10 @@ struct Scene {
 
     void Start();
     void Update();
+    void InsertShadowDrawLogic(Mesh& mesh, entt::entity& entity);
     void InsertDrawLogic(Mesh& mesh, entt::entity& entity);
+    void InsertInstancedShadowDrawLogic(Mesh& mesh, entt::entity& entity);
+    void InsertInstancedDrawLogic(Mesh& mesh, entt::entity& entity);
 };
 
 struct GraphicsDemoScene : Scene {
@@ -32,7 +35,7 @@ struct GraphicsDemoScene : Scene {
         entt::entity terrain = registry.create();
         registry.emplace<TransformComponent>(terrain);
         registry.emplace<MeshComponent>(terrain);
-        registry.emplace<TerrainMeshComponent>(terrain);
+        registry.emplace<TerrainComponent>(terrain);
         registry.emplace<InstancedMeshComponent>(terrain);
 
         systems.push_back(std::make_unique<TerrainSystem>());

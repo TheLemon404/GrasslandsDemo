@@ -15,6 +15,7 @@ uniform vec3 sunColor;
 uniform vec3 shadowColor;
 uniform float blurDistance;
 uniform vec3 cameraPosition;
+uniform int receivesShadow;
 uniform sampler2D shadowMap;
 
 layout (location = 0) out vec4 fragColor;
@@ -69,8 +70,10 @@ void main() {
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
     vec3 finalSpecular = (1.0 - roughness) * spec * sunColor;
 
-    float shadow = shadowCalculation();
-
+    float shadow = 0.0f;
+    if(receivesShadow != 0) {
+        shadow = shadowCalculation();
+    }
     vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
     vec4 final = vec4(lighting, 1.0f);
     fragColor = final;

@@ -394,6 +394,7 @@ void Renderer::Initialize() {
     postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
     fullscreenQuadShader = CreateShader("resources/shaders/fullscreen_quad.vert", "resources/shaders/fullscreen_quad.frag");
     terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag");
+    grassInstancedShader = CreateShader("resources/shaders/grass_instanced.vert", "resources/shaders/grass_instanced.frag");
 
     shadowFramebuffer = CreateShadowFramebuffer(globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
 
@@ -466,6 +467,8 @@ void Renderer::DrawActiveScene() {
             UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
             UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
 
+            globals.scene.InsertShadowDrawLogic(mesh, entity);
+
             if (!mesh.indices.empty()) {
                 glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
             }
@@ -512,6 +515,8 @@ void Renderer::DrawActiveScene() {
             UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
             UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
 
+            globals.scene.InsertInstancedShadowDrawLogic(mesh, entity);
+
             if (!mesh.indices.empty()) {
                 glDrawElementsInstanced(GL_TRIANGLES,  mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedMeshComponent.transforms.size());
             }
@@ -549,11 +554,10 @@ void Renderer::DrawActiveScene() {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
         glUseProgram(mesh.material.shaderProgramId);
 
-        //IMPORTANT: this is where we can insert custom shader uniforms into the render function, through systems
-        globals.scene.InsertDrawLogic(mesh, entity);
-
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
         UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
         if (mesh.material.texture.id != 0) {
             UploadShaderUniformInt(mesh.material.shaderProgramId, "baseTexture", 2);
@@ -574,6 +578,8 @@ void Renderer::DrawActiveScene() {
         UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightProjection", lightProjection);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
+
+        globals.scene.InsertDrawLogic(mesh, entity);
 
         glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -605,19 +611,16 @@ void Renderer::DrawActiveScene() {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
         glUseProgram(mesh.material.shaderProgramId);
 
         UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
         UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
 
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
         UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
         if (mesh.material.texture.id != 0) {
             UploadShaderUniformInt(mesh.material.shaderProgramId, "baseTexture", 2);
-        }
-
-        for (int i = 0; i < instancedMeshComponent.transforms.size(); ++i) {
-            UpdateTransform(instancedMeshComponent.transforms[i]);
-            UploadShaderUniformMat4(mesh.material.shaderProgramId, std::string("transforms[" + std::to_string(i) + "]"), instancedMeshComponent.transforms[i].matrix);
         }
 
         UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", camera.view);
@@ -636,6 +639,8 @@ void Renderer::DrawActiveScene() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
+        globals.scene.InsertInstancedDrawLogic(mesh, entity);
+
         if (!mesh.indices.empty()) {
             glDrawElementsInstanced(GL_TRIANGLES,  mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedMeshComponent.transforms.size());
         }
@@ -647,6 +652,7 @@ void Renderer::DrawActiveScene() {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
         glBindVertexArray(0);
 
         if (!mesh.cullBackface) {

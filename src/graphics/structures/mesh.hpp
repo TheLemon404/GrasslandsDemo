@@ -7,6 +7,7 @@ struct Mesh {
     bool cullBackface = true;
     int shadowCullFace = 0;
     bool castsShadow = true;
+    bool receivesShadow = true;
 
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
