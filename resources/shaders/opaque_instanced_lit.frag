@@ -74,6 +74,7 @@ void main() {
     if(receivesShadow != 0) {
         shadow = shadowCalculation();
     }
+
     vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
     vec4 final = vec4(lighting, 1.0f);
     fragColor = final;

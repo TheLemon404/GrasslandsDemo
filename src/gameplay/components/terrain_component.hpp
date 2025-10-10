@@ -8,5 +8,5 @@ struct TerrainComponent {
 
     Texture heightMapTexture;
 
-    int grassBlades = 10000;
+    int grassBlades = 100000;
 };

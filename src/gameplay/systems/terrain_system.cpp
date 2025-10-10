@@ -60,11 +60,9 @@ void TerrainSystem::Start(entt::registry& registry) {
             }
         }
 
-        terrain.heightMapTexture = Texture::LoadTextureFromFile("resources/textures/th.png", 3);
-
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shaderProgramId = globals.renderer.terrainShader.programId;
-        mesh.material.albedo = glm::vec3(0.4f, 0.9f, 0.5f);
+        mesh.material.albedo = glm::vec3(0.3f, 1.0f, 0.6f);
         mesh.material.roughness = 1.0f;
 
         //creating the grass blades
@@ -74,15 +72,15 @@ void TerrainSystem::Start(entt::registry& registry) {
         grassInstancedMesh.mesh.material.shaderProgramId = globals.renderer.grassInstancedShader.programId;
         grassInstancedMesh.mesh.cullBackface = false;
         grassInstancedMesh.mesh.castsShadow = false;
-        grassInstancedMesh.mesh.receivesShadow = false;
 
-        for (int i = 0; i < sqrt(terrain.grassBlades); i++) {
-            for (int j = 0; j < sqrt(terrain.grassBlades); j++) {
+        int sq = sqrt(terrain.grassBlades);
+        for (int i = 0; i < sq; i++) {
+            for (int j = 0; j < sq; j++) {
                 Transform t = {};
-                float x = static_cast<float>(i) - sqrt(terrain.grassBlades) / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-                float z = static_cast<float>(j) - sqrt(terrain.grassBlades) / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+                float x = static_cast<float>(i) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+                float z = static_cast<float>(j) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
                 t.rotation.y = static_cast<float>(rand());
-                t.position = {x * (float)terrain.dimensions.x / sqrt(terrain.grassBlades), 1.0f,  z * (float)terrain.dimensions.y / sqrt(terrain.grassBlades)};
+                t.position = {x * (float)terrain.dimensions.x / sq, 0.0f,  z * (float)terrain.dimensions.y / sq};
                 Renderer::UpdateTransform(t);
                 grassInstancedMesh.transforms.push_back(t);
             }
