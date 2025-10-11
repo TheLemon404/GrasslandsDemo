@@ -7,5 +7,5 @@ struct TerrainSystem : System {
     void InsertShadowDrawLogic(Mesh &mesh, entt::entity &entity) override {};
     void InsertDrawLogic(Mesh& mesh, entt::entity& entity) override;
     void InsertInstancedShadowDrawLogic(Mesh &mesh, entt::entity &entity) override {};
-    void InsertInstancedDrawLogic(Mesh& mesh, entt::entity& entity) override {};
+    void InsertInstancedDrawLogic(Mesh& mesh, entt::entity& entity) override;
 };

@@ -62,11 +62,11 @@ void main() {
 
     vec3 normal = normalize(cross(dFdx(pPosition), dFdy(pPosition)));
 
-    vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.0f) * sunColor;
+    vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.7f) * sunColor;
 
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), normal);
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 32);
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.7f), 32);
     vec3 finalSpecular = (1.0 - roughness) * spec * sunColor;
 
     float shadow = shadowCalculation(normal);

@@ -3,8 +3,8 @@
 #include "GLFW/glfw3.h"
 
 void Clock::Tick() {
-    double currentTime = glfwGetTime();
-    deltaTime = currentTime - lastFrameTime;
-    lastFrameTime = currentTime;
+    time = glfwGetTime();
+    deltaTime = time - lastFrameTime;
+    lastFrameTime = time;
 }
 

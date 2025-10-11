@@ -4,8 +4,10 @@ layout (location = 0) in vec3 pPosition;
 layout (location = 1) in vec3 pNormal;
 layout (location = 2) in vec2 pUV;
 layout (location = 3) in vec4 fragPosLightSpace;
+layout (location = 4) in vec2 terrainSpaceUV;
 
-uniform vec3 albedo;
+uniform vec3 lowerColor;
+uniform vec3 upperColor;
 uniform float roughness;
 uniform sampler2D baseTexture;
 uniform int hasBaseTexture;
@@ -54,20 +56,15 @@ float shadowCalculation() {
 void main() {
     vec4 color = vec4(1.0);
 
-    if(hasBaseTexture == 1) {
-        color = vec4(albedo, 1.0f) * texture(baseTexture, pUV);
-    }
-    else {
-        color = vec4(albedo, 1.0f);
-    }
+    color = vec4(mix(lowerColor, upperColor, pUV.y), 1.0);
 
     float depth = distance(cameraPosition, pPosition);
 
-    vec3 diffuse = max(dot(pNormal, normalize(-sunDirection)), 0.6f) * sunColor;
+    vec3 diffuse = max(dot(pNormal, normalize(-sunDirection)), 0.8f) * sunColor;
 
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.6f), 32);
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.8f), 32);
     vec3 finalSpecular = (1.0 - roughness) * spec * sunColor;
 
     float shadow = 0.0f;
@@ -75,8 +72,8 @@ void main() {
         shadow = shadowCalculation();
     }
 
-    vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse) * color.rgb;
+    vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
     vec4 final = vec4(lighting, 1.0f);
-    fragColor = final;
+    fragColor = final * mix(0.7, 1.0, smoothstep(0.0, 0.3, pUV.y));
     gl_FragDepth = gl_FragCoord.z;
 }

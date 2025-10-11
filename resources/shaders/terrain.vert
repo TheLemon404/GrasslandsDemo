@@ -20,10 +20,12 @@ layout (location = 3) out vec4 fragPosLightSpace;
 
 void main()
 {
+    vec4 worldPosition = transform * vec4(aPosition, 1.0f);
     mat3 normalMatrix = mat3(transpose(inverse(transform)));
-    vec4 modifiedVertexPosition = (vec4(aPosition, 1.0f) + vec4(0.0f, texture(heightMap, aUV).r * heightMapStrength, 0.0f, 0.0f));
-    gl_Position = projection * view * transform * modifiedVertexPosition;
+    vec4 modifiedPosition = (worldPosition + vec4(0.0f, texture(heightMap, aUV).r * heightMapStrength, 0.0f, 0.0f));
+
+    gl_Position = projection * view * transform * modifiedPosition;
     pUV = aUV;
-    pPosition = (transform * modifiedVertexPosition).xyz;
-    fragPosLightSpace = lightProjection * lightView * transform * modifiedVertexPosition;
+    pPosition = (transform * modifiedPosition).xyz;
+    fragPosLightSpace = lightProjection * lightView * transform * modifiedPosition;
 }

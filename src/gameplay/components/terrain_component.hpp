@@ -7,6 +7,7 @@ struct TerrainComponent {
     glm::ivec2 resolution = glm::ivec2(200);
 
     Texture heightMapTexture;
+    Texture perlinNoiseTexture;
 
-    int grassBlades = 100000;
+    int grassBlades = 60000;
 };

@@ -60,15 +60,18 @@ void TerrainSystem::Start(entt::registry& registry) {
             }
         }
 
+        terrain.heightMapTexture = Texture::LoadTextureFromFile("resources/textures/th.png", 3);
+
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shaderProgramId = globals.renderer.terrainShader.programId;
-        mesh.material.albedo = glm::vec3(0.3f, 1.0f, 0.6f);
+        mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
         mesh.material.roughness = 1.0f;
 
         //creating the grass blades
         InstancedMeshComponent& grassInstancedMesh = registry.get<InstancedMeshComponent>(entity);
         grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
-        grassInstancedMesh.mesh.material.albedo = glm::vec3(0.3f, 1.0f, 0.6f);
+        grassInstancedMesh.mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
+        grassInstancedMesh.mesh.material.roughness = 1.0f;
         grassInstancedMesh.mesh.material.shaderProgramId = globals.renderer.grassInstancedShader.programId;
         grassInstancedMesh.mesh.cullBackface = false;
         grassInstancedMesh.mesh.castsShadow = false;
@@ -80,6 +83,7 @@ void TerrainSystem::Start(entt::registry& registry) {
                 float x = static_cast<float>(i) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
                 float z = static_cast<float>(j) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
                 t.rotation.y = static_cast<float>(rand());
+                t.scale = glm::vec3(0.5f, 0.5f, 0.5f);
                 t.position = {x * (float)terrain.dimensions.x / sq, 0.0f,  z * (float)terrain.dimensions.y / sq};
                 Renderer::UpdateTransform(t);
                 grassInstancedMesh.transforms.push_back(t);
@@ -127,9 +131,23 @@ void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
     }
 }
 
+void TerrainSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
+    if (globals.scene.registry.try_get<TerrainComponent>(entity)) {
+        TerrainComponent terrain = globals.scene.registry.get<TerrainComponent>(entity);
+
+        Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrain.dimensions / 2);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)globals.clock.time);
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.678f, 0.859f, 0.522f));
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.812f, 0.922f, 0.573f));
+
+        Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
+    }
+}
