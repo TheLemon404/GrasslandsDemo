@@ -2,6 +2,7 @@
 #include "globals.hpp"
 #include "quil.h"
 #define GLM_ENABLE_EXPERIMENTAL
+#include "debug/debug_layer.hpp"
 #include "gtx/rotate_vector.hpp"
 
 Globals globals = {};
@@ -20,6 +21,8 @@ int main() {
         return -1;
     }
     globals.renderer.Initialize();
+
+    DebugLayer::Initialize(globals.window.glfwWindow);
 
     globals.scene = GraphicsDemoScene();
     globals.scene.Start();
@@ -45,6 +48,8 @@ int main() {
         }
 
         globals.renderer.DrawActiveScene();
+
+        DebugLayer::DrawDebugGUI();
 
         quilPollCallbacks();
 

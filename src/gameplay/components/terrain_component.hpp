@@ -9,8 +9,5 @@ struct TerrainComponent {
     Texture heightMapTexture;
     Texture perlinNoiseTexture;
 
-    int numGrassSectorsPerSide = 3;
-    std::vector<glm::vec2> grassSectors;
-
     int grassBlades = 3000000;
 };
