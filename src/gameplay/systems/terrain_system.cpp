@@ -60,7 +60,8 @@ void TerrainSystem::Start(entt::registry& registry) {
             }
         }
 
-        terrain.heightMapTexture = Texture::LoadTextureFromFile("resources/textures/th.png", 3);
+        terrain.heightMapTexture = Texture::LoadTextureFromFile("resources/textures/perlin.png", 3, false);
+        terrain.perlinNoiseTexture = Texture::LoadTextureFromFile("resources/textures/perlinLarge.png", 3);
 
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shaderProgramId = globals.renderer.terrainShader.programId;
@@ -145,9 +146,13 @@ void TerrainSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.678f, 0.859f, 0.522f));
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.812f, 0.922f, 0.573f));
 
+        Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
+
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, terrain.perlinNoiseTexture.id);
     }
 }
