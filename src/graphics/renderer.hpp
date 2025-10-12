@@ -38,7 +38,7 @@ public:
     static void UpdateTransform(Transform& transform);
     void UploadMaterialUniforms(Mesh& mesh);
 
-    bool isDebugMode = false;
+    bool showShadowMapDebug = false;
 
     static void CreateMeshBuffers(Mesh& mesh);
 

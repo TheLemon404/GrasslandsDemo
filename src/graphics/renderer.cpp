@@ -663,7 +663,7 @@ void Renderer::DrawActiveScene() {
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    if (isDebugMode) {
+    if (showShadowMapDebug) {
         glBindVertexArray(fullscreenQuad.vao);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(2);

@@ -2,6 +2,7 @@
 #include "globals.hpp"
 #include "quil.h"
 #define GLM_ENABLE_EXPERIMENTAL
+#include "imgui.h"
 #include "debug/debug_layer.hpp"
 #include "gtx/rotate_vector.hpp"
 
@@ -36,15 +37,18 @@ int main() {
         globals.renderer.camera.position += (globals.renderer.camera.position - globals.renderer.camera.target) * (-globals.window.mouseProperties.mouseScrollVector.y / 20.0f);
 
         if (quilIsKeyPressed(GLFW_KEY_X)) {
-            globals.renderer.isDebugMode = !globals.renderer.isDebugMode;
+            globals.renderer.showShadowMapDebug = !globals.renderer.showShadowMapDebug;
         }
 
-        if (quilIsMouseButtonPressed(GLFW_MOUSE_BUTTON_1)) {
-            glm::vec3 cameraForward = glm::normalize(globals.renderer.camera.target - globals.renderer.camera.position);
-            glm::vec3 cameraRight = glm::normalize(glm::cross(globals.renderer.camera.up, cameraForward));
-            glm::vec2 mouseDelta = globals.window.mouseProperties.mousePosition - globals.window.mouseProperties.mousePositionLast;
-            globals.renderer.RotateCameraArount(-mouseDelta.x * globals.settings.mouseSensitivityMultiplier, glm::vec3(0, 1, 0), globals.renderer.camera.target);
-            globals.renderer.RotateCameraArount(mouseDelta.y * globals.settings.mouseSensitivityMultiplier, cameraRight, globals.renderer.camera.target);
+        ImGuiIO& io = ImGui::GetIO();
+        if (!io.WantCaptureMouse) {
+            if (quilIsMouseButtonPressed(GLFW_MOUSE_BUTTON_1)) {
+                glm::vec3 cameraForward = glm::normalize(globals.renderer.camera.target - globals.renderer.camera.position);
+                glm::vec3 cameraRight = glm::normalize(glm::cross(globals.renderer.camera.up, cameraForward));
+                glm::vec2 mouseDelta = globals.window.mouseProperties.mousePosition - globals.window.mouseProperties.mousePositionLast;
+                globals.renderer.RotateCameraArount(-mouseDelta.x * globals.settings.mouseSensitivityMultiplier, glm::vec3(0, 1, 0), globals.renderer.camera.target);
+                globals.renderer.RotateCameraArount(mouseDelta.y * globals.settings.mouseSensitivityMultiplier, cameraRight, globals.renderer.camera.target);
+            }
         }
 
         globals.renderer.DrawActiveScene();

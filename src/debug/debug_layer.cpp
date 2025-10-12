@@ -1,6 +1,7 @@
 #include "debug_layer.hpp"
 #include <imgui.h>
 
+#include "../globals.hpp"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
@@ -26,7 +27,12 @@ void DebugLayer::DrawDebugGUI() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
+
+    //master debug window
+    ImGui::Begin("Debug");
+    ImGui::Checkbox("RenderDebug", &globals.renderer.showShadowMapDebug);
+    ImGui::End();
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
