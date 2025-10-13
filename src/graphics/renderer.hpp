@@ -29,7 +29,6 @@ static Mesh fullscreenQuad = {
 
 class Renderer {
     void DeleteShader(Shader& shader);
-    void LoadShaders();
 
     Framebuffer shadowFramebuffer;
 

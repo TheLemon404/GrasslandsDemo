@@ -3,7 +3,8 @@
 #include <iostream>
 #include <quil.h>
 
-#include "../globals.hpp"
+#include "../application.hpp"
+#include "../debug/debug_layer.hpp"
 #include "glad/glad.h"
 
 bool Window::Initialize(unsigned int width, unsigned int height, const char* title) {
@@ -16,13 +17,13 @@ bool Window::Initialize(unsigned int width, unsigned int height, const char* tit
         return false;
     }
 
-    glfwWindowHint(GLFW_SAMPLES, globals.settings.msaaSamples);
+    glfwWindowHint(GLFW_SAMPLES, application.settings.msaaSamples);
 
     glfwWindow = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
     if (!glfwWindow) {
         glfwTerminate();
-        globals.logger.ThrowRuntimeError("failed to create glfw window");
+        application.logger.ThrowRuntimeError("failed to create glfw window");
     }
 
     glfwMakeContextCurrent(glfwWindow);
@@ -32,10 +33,10 @@ bool Window::Initialize(unsigned int width, unsigned int height, const char* tit
     quilCreateWindowContext(glfwWindow);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        globals.logger.ThrowRuntimeError("failed to load glad");
+        application.logger.ThrowRuntimeError("failed to load glad");
     }
 
-    globals.logger.Log("window successfully initialized");
+    application.logger.Log("window successfully initialized");
     return true;
 }
 
@@ -56,16 +57,17 @@ void Window::Close() {
     glfwTerminate();
 }
 
+
 void Window::OnResize(GLFWwindow *window, int width, int height) {
-    globals.window.width = width;
-    globals.window.height = height;
+    application.window.width = width;
+    application.window.height = height;
 }
 
 void Window::OnMouseMove(GLFWwindow *window, double x, double y) {
-    globals.window.mouseProperties.mousePositionLast = globals.window.mouseProperties.mousePosition;
-    globals.window.mouseProperties.mousePosition = glm::vec2(x, y);
+    application.window.mouseProperties.mousePositionLast = application.window.mouseProperties.mousePosition;
+    application.window.mouseProperties.mousePosition = glm::vec2(x, y);
 }
 
 void Window::OnMouseScroll(GLFWwindow *window, double xOffset, double yOffset) {
-    globals.window.mouseProperties.mouseScrollVector = glm::vec2(xOffset, yOffset);
+    application.window.mouseProperties.mouseScrollVector = glm::vec2(xOffset, yOffset);
 }

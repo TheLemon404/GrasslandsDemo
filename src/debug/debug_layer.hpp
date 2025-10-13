@@ -4,4 +4,5 @@
 struct DebugLayer {
     static void Initialize(GLFWwindow* window);
     static void DrawDebugGUI();
+    static void Shutdown();
 };

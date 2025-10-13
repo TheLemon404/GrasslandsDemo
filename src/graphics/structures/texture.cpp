@@ -2,8 +2,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../utils/stb_image.h"
-#include "../../globals.hpp"
 #include "glad/glad.h"
+#include "../../application.hpp"
 
 Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool repeat) {
     Texture texture = {
@@ -33,17 +33,17 @@ Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool r
         else if (texture.nrChannels == 4)
             format = GL_RGBA;
         else {
-            globals.logger.Log("Unsupported number of channels: " + std::to_string(texture.nrChannels));
+            application.logger.Log("Unsupported number of channels: " + std::to_string(texture.nrChannels));
             stbi_image_free(data);
             return texture;
         }
 
         glTexImage2D(GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-        globals.logger.Log("Successfully loaded texture: " + std::string(path));
+        application.logger.Log("Successfully loaded texture: " + std::string(path));
     }
     else {
-        globals.logger.Log("Failed to load texture: " + std::string(path));
+        application.logger.Log("Failed to load texture: " + std::string(path));
     }
     stbi_image_free(data);
 

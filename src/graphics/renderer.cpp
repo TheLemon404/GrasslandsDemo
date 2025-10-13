@@ -6,7 +6,7 @@
 #include <cassert>
 #include <regex>
 #include <glad/glad.h>
-#include "../globals.hpp"
+#include "../application.hpp"
 #include "glm.hpp"
 #include "../gameplay/components/instanced_mesh_component.hpp"
 #include "../gameplay/components/mesh_component.hpp"
@@ -119,13 +119,13 @@ Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAsse
 
     if (!reader.ParseFromFile(meshAssetPath.c_str(), reader_config)) {
         if (!reader.Error().empty()) {
-            globals.logger.ThrowRuntimeError("TinyObjReader: " + reader.Error());
+            application.logger.ThrowRuntimeError("TinyObjReader: " + reader.Error());
         }
         exit(1);
     }
 
     if (!reader.Warning().empty()) {
-        globals.logger.Log("TinyObjReader: " + reader.Warning());
+        application.logger.Log("TinyObjReader: " + reader.Warning());
     }
 
     auto& shapes = reader.GetShapes();
@@ -141,14 +141,14 @@ Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAsse
     for (Mesh& mesh : meshes) {
         CreateMeshBuffers(mesh);
         if (instanced) {
-            mesh.material.shaderProgramId = globals.renderer.opaqueLitInstancedShader.programId;
+            mesh.material.shaderProgramId = application.renderer.opaqueLitInstancedShader.programId;
         }
         else {
-            mesh.material.shaderProgramId = globals.renderer.opaqueLitShader.programId;
+            mesh.material.shaderProgramId = application.renderer.opaqueLitShader.programId;
         }
     }
 
-    globals.logger.Log("successfully loaded obj file: " + meshAssetPath);
+    application.logger.Log("successfully loaded obj file: " + meshAssetPath);
     return meshes[0];
 }
 
@@ -181,7 +181,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     if(!vertexSuccess) {
         glGetShaderInfoLog(vertexShaderId, 512, nullptr, vertexInfoLog);
-        globals.logger.ThrowRuntimeError(vertexInfoLog);
+        application.logger.ThrowRuntimeError(vertexInfoLog);
     }
 
     //fragment shader compilationg
@@ -195,7 +195,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     if(!fragmentSuccess) {
         glGetShaderInfoLog(fragmentShaderId, 512, nullptr, fragmentInfoLog);
-        globals.logger.ThrowRuntimeError(fragmentInfoLog);
+        application.logger.ThrowRuntimeError(fragmentInfoLog);
     }
 
     programId = glCreateProgram();
@@ -212,11 +212,11 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
     glGetProgramiv(programId, GL_LINK_STATUS, &programSuccess);
     if(!programSuccess) {
         glGetProgramInfoLog(programId, 512, nullptr, programInfoLog);
-        globals.logger.ThrowRuntimeError(programInfoLog);
+        application.logger.ThrowRuntimeError(programInfoLog);
     }
 
-    globals.logger.Log("successfully compiled vertex shader: " + std::string(vertexShaderLocalPath));
-    globals.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderLocalPath));
+    application.logger.Log("successfully compiled vertex shader: " + std::string(vertexShaderLocalPath));
+    application.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderLocalPath));
 
     return {
         vertexParser.content.c_str(),
@@ -325,7 +325,7 @@ Framebuffer Renderer::CreateFramebuffer(int width, int height) {
     glDrawBuffers(4, drawBuffers);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        globals.logger.ThrowRuntimeError("failed to create framebuffer");
+        application.logger.ThrowRuntimeError("failed to create framebuffer");
     }
 
     return framebuffer;
@@ -355,7 +355,7 @@ Framebuffer Renderer::CreateShadowFramebuffer(int width, int height) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        globals.logger.ThrowRuntimeError("failed to create framebuffer");
+        application.logger.ThrowRuntimeError("failed to create framebuffer");
     }
 
     return framebuffer;
@@ -363,7 +363,7 @@ Framebuffer Renderer::CreateShadowFramebuffer(int width, int height) {
 
 void Renderer::UpdateCameraMatrices() {
     camera.projection = glm::identity<glm::mat4>();
-    camera.projection = glm::perspective<float>(camera.fov, (float)globals.window.width / (float)globals.window.height, camera.near, camera.far);
+    camera.projection = glm::perspective<float>(camera.fov, (float)application.window.width / (float)application.window.height, camera.near, camera.far);
 
     camera.view = glm::identity<glm::mat4>();
     camera.view = glm::lookAt(camera.position, camera.target, camera.up);
@@ -408,7 +408,7 @@ void Renderer::Initialize() {
     terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag");
     grassInstancedShader = CreateShader("resources/shaders/grass_instanced.vert", "resources/shaders/grass_instanced.frag");
 
-    shadowFramebuffer = CreateShadowFramebuffer(globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
+    shadowFramebuffer = CreateShadowFramebuffer(application.settings.shadowFramebufferResolution, application.settings.shadowFramebufferResolution);
 
     UpdateCameraMatrices();
 
@@ -422,7 +422,7 @@ void Renderer::Initialize() {
     //create default objects (fullscreen quad etc...)
     CreateMeshBuffers(fullscreenQuad);
     fullscreenQuad.material.texture.id = shadowFramebuffer.depthTexture.id;
-    fullscreenQuad.material.shaderProgramId = globals.renderer.fullscreenQuadShader.programId;
+    fullscreenQuad.material.shaderProgramId = application.renderer.fullscreenQuadShader.programId;
 }
 
 void Renderer::DrawActiveScene() {
@@ -433,7 +433,7 @@ void Renderer::DrawActiveScene() {
 
     //shadow pass
     glCullFace(GL_BACK);
-    glViewport(0, 0, globals.settings.shadowFramebufferResolution, globals.settings.shadowFramebufferResolution);
+    glViewport(0, 0, application.settings.shadowFramebufferResolution, application.settings.shadowFramebufferResolution);
     glBindFramebuffer(GL_FRAMEBUFFER, shadowFramebuffer.id);
     glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -444,7 +444,7 @@ void Renderer::DrawActiveScene() {
     glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
     // place the light at some distance in the light direction behind the scene center
     glm::vec3 sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f); // choose logical scene center or camera target
-    glm::vec3 lightDir = glm::normalize(globals.scene.environment.sunDirection); // direction the sun shines
+    glm::vec3 lightDir = glm::normalize(application.scene.environment.sunDirection); // direction the sun shines
     float lightDistance = 5.0f; // tune this so the light is sufficiently far out
     glm::vec3 lightPos = sceneCenter - lightDir * lightDistance; // position the light "behind" the scene
     glm::vec3 lightTarget = sceneCenter;
@@ -452,11 +452,11 @@ void Renderer::DrawActiveScene() {
     glm::mat4 lightView = glm::lookAt(lightPos, lightTarget, up);
 
     //regular mesh shadow pass
-    auto view = globals.scene.registry.view<MeshComponent, TransformComponent>();
+    auto view = application.scene.registry.view<MeshComponent, TransformComponent>();
     for (auto entity : view) {
-        TransformComponent transformComponent = globals.scene.registry.get<TransformComponent>(entity);
+        TransformComponent transformComponent = application.scene.registry.get<TransformComponent>(entity);
         UpdateTransform(transformComponent.transform);
-        Mesh mesh = globals.scene.registry.get<MeshComponent>(entity).mesh;
+        Mesh mesh = application.scene.registry.get<MeshComponent>(entity).mesh;
 
         if (mesh.castsShadow) {
             if (mesh.shadowCullFace == 0) {
@@ -467,7 +467,7 @@ void Renderer::DrawActiveScene() {
             }
 
             if (mesh.vao == 0) {
-                globals.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
+                application.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
             }
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
@@ -477,7 +477,7 @@ void Renderer::DrawActiveScene() {
 
             UploadTransformationDataUniforms(mesh, transformComponent.transform.matrix, lightView, lightProjection);
 
-            globals.scene.InsertShadowDrawLogic(mesh, entity);
+            application.scene.InsertShadowDrawLogic(mesh, entity);
 
             if (!mesh.indices.empty()) {
                 glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
@@ -495,7 +495,7 @@ void Renderer::DrawActiveScene() {
     }
 
     //instanced mesh shadow pass
-    auto view2 = globals.scene.registry.view<InstancedMeshComponent>();
+    auto view2 = application.scene.registry.view<InstancedMeshComponent>();
     for (auto entity : view2) {
         InstancedMeshComponent& instancedMeshComponent = view2.get<InstancedMeshComponent>(entity);
         Mesh mesh = instancedMeshComponent.mesh;
@@ -509,7 +509,7 @@ void Renderer::DrawActiveScene() {
             }
 
             if (mesh.vao == 0) {
-                globals.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
+                application.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
             }
             glBindVertexArray(mesh.vao);
             glEnableVertexAttribArray(0);
@@ -519,7 +519,7 @@ void Renderer::DrawActiveScene() {
 
             UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), lightView, lightProjection);
 
-            globals.scene.InsertInstancedShadowDrawLogic(mesh, entity);
+            application.scene.InsertInstancedShadowDrawLogic(mesh, entity);
 
             if (!mesh.indices.empty()) {
                 glDrawElementsInstanced(GL_TRIANGLES,  mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedMeshComponent.transforms.size());
@@ -540,15 +540,15 @@ void Renderer::DrawActiveScene() {
 
     //forward pass
     glCullFace(GL_FRONT);
-    glViewport(0, 0, globals.window.width, globals.window.height);
+    glViewport(0, 0, application.window.width, application.window.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(globals.scene.environment.clearColor.r, globals.scene.environment.clearColor.g, globals.scene.environment.clearColor.b, 1.0f);
+    glClearColor(application.scene.environment.clearColor.r, application.scene.environment.clearColor.g, application.scene.environment.clearColor.b, 1.0f);
 
     //regular mesh rendering logic
     for (auto entity : view) {
-        TransformComponent transformComponent = globals.scene.registry.get<TransformComponent>(entity);
+        TransformComponent transformComponent = application.scene.registry.get<TransformComponent>(entity);
         UpdateTransform(transformComponent.transform);
-        Mesh mesh = globals.scene.registry.get<MeshComponent>(entity).mesh;
+        Mesh mesh = application.scene.registry.get<MeshComponent>(entity).mesh;
 
         if (!mesh.cullBackface) {
             glDisable(GL_CULL_FACE);
@@ -568,15 +568,15 @@ void Renderer::DrawActiveScene() {
         UploadMaterialUniforms(mesh);
 
         //upload environment data
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", globals.scene.environment.sunDirection);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", globals.scene.environment.sunColor);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
+        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", application.scene.environment.sunDirection);
+        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", application.scene.environment.sunColor);
+        UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", application.scene.environment.shadowColor);
         UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
-        UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
+        UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", application.settings.blurDistance);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
-        globals.scene.InsertDrawLogic(mesh, entity);
+        application.scene.InsertDrawLogic(mesh, entity);
 
         glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
 
@@ -601,7 +601,7 @@ void Renderer::DrawActiveScene() {
         }
 
         if (mesh.vao == 0) {
-            globals.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
+            application.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
         }
 
         glBindVertexArray(mesh.vao);
@@ -619,15 +619,15 @@ void Renderer::DrawActiveScene() {
 
 
         //upload environment data
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", globals.scene.environment.sunDirection);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", globals.scene.environment.sunColor);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
+        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", application.scene.environment.sunDirection);
+        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", application.scene.environment.sunColor);
+        UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", application.scene.environment.shadowColor);
         UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
-        UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
+        UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", application.settings.blurDistance);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
-        globals.scene.InsertInstancedDrawLogic(mesh, entity);
+        application.scene.InsertInstancedDrawLogic(mesh, entity);
 
         if (!mesh.indices.empty()) {
             glDrawElementsInstanced(GL_TRIANGLES,  mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedMeshComponent.transforms.size());

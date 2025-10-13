@@ -1,6 +1,6 @@
 #include "terrain_system.hpp"
 
-#include "../../globals.hpp"
+#include "../../application.hpp"
 #include "../components/mesh_component.hpp"
 #include "../components/terrain_component.hpp"
 #include "glad/glad.h"
@@ -54,7 +54,7 @@ void TerrainSystem::Start(entt::registry& registry) {
         for (size_t k = 0; k < mesh.indices.size(); ++k) {
             if (mesh.indices[k] >= maxIndex) {
                 // you can log or throw; prefer logging so you can see what's wrong without crashing
-                globals.logger.ThrowRuntimeError("Terrain::Generate: index out of range at index " + std::to_string(k) +
+                application.logger.ThrowRuntimeError("Terrain::Generate: index out of range at index " + std::to_string(k) +
                                                 " value: " + std::to_string(mesh.indices[k]) +
                                                 " max allowed: " + std::to_string(maxIndex - 1));
             }
@@ -64,7 +64,7 @@ void TerrainSystem::Start(entt::registry& registry) {
         terrain.perlinNoiseTexture = Texture::LoadTextureFromFile("resources/textures/perlinLarge.png", 3);
 
         Renderer::CreateMeshBuffers(mesh);
-        mesh.material.shaderProgramId = globals.renderer.terrainShader.programId;
+        mesh.material.shaderProgramId = application.renderer.terrainShader.programId;
         mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
         mesh.material.roughness = 1.0f;
 
@@ -73,7 +73,7 @@ void TerrainSystem::Start(entt::registry& registry) {
         grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
         grassInstancedMesh.mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
         grassInstancedMesh.mesh.material.roughness = 1.0f;
-        grassInstancedMesh.mesh.material.shaderProgramId = globals.renderer.grassInstancedShader.programId;
+        grassInstancedMesh.mesh.material.shaderProgramId = application.renderer.grassInstancedShader.programId;
         grassInstancedMesh.mesh.cullBackface = false;
         grassInstancedMesh.mesh.castsShadow = false;
 
@@ -127,8 +127,8 @@ void TerrainSystem::Update(entt::registry& registry) {
 }
 
 void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
-    if (globals.scene.registry.try_get<TerrainComponent>(entity)) {
-        TerrainComponent terrain = globals.scene.registry.get<TerrainComponent>(entity);
+    if (application.scene.registry.try_get<TerrainComponent>(entity)) {
+        TerrainComponent terrain = application.scene.registry.get<TerrainComponent>(entity);
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
@@ -138,11 +138,11 @@ void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
 }
 
 void TerrainSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
-    if (globals.scene.registry.try_get<TerrainComponent>(entity)) {
-        TerrainComponent terrain = globals.scene.registry.get<TerrainComponent>(entity);
+    if (application.scene.registry.try_get<TerrainComponent>(entity)) {
+        TerrainComponent terrain = application.scene.registry.get<TerrainComponent>(entity);
 
         Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrain.dimensions / 2);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)globals.clock.time);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)application.clock.time);
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.678f, 0.859f, 0.522f));
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.812f, 0.922f, 0.573f));
 

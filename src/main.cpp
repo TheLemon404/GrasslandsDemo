@@ -1,67 +1,56 @@
 #include <glad/glad.h>
-#include "globals.hpp"
+#include "application.hpp"
 #include "quil.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "imgui.h"
 #include "debug/debug_layer.hpp"
 #include "gtx/rotate_vector.hpp"
 
-Globals globals = {};
+Application application = Application();
 
 int main() {
-    globals.window = Window();
-    globals.renderer = Renderer();
-    globals.io = IO();
-    globals.logger = Logger();
-    globals.clock = Clock();
-    globals.settings = Settings();
-
-    quilCreateWindowContext(globals.window.glfwWindow);
-
-    if (!globals.window.Initialize(1200, 800, "Chess3D")) {
+    if (!application.Initialize()) {
         return -1;
     }
-    globals.renderer.Initialize();
+    quilCreateWindowContext(application.window.glfwWindow);
 
-    DebugLayer::Initialize(globals.window.glfwWindow);
+    DebugLayer::Initialize(application.window.glfwWindow);
 
-    globals.scene = GraphicsDemoScene();
-    globals.scene.Start();
+    application.scene = GraphicsDemoScene();
+    application.scene.Start();
 
-    while (!globals.window.ShouldClose()) {
-        globals.clock.Tick();
+    while (!application.window.ShouldClose()) {
+        application.clock.Tick();
 
-        globals.scene.Update();
-        globals.scene.environment.sunDirection = glm::rotateY(globals.scene.environment.sunDirection, 0.1f * (float)globals.clock.deltaTime);
+        application.scene.Update();
+        application.scene.environment.sunDirection = glm::rotateY(application.scene.environment.sunDirection, 0.1f * (float)application.clock.deltaTime);
 
-        globals.renderer.camera.position += (globals.renderer.camera.position - globals.renderer.camera.target) * (-globals.window.mouseProperties.mouseScrollVector.y / 20.0f);
+        application.renderer.camera.position += (application.renderer.camera.position - application.renderer.camera.target) * (-application.window.mouseProperties.mouseScrollVector.y / 20.0f);
 
         if (quilIsKeyPressed(GLFW_KEY_X)) {
-            globals.renderer.showShadowMapDebug = !globals.renderer.showShadowMapDebug;
+            application.renderer.showShadowMapDebug = !application.renderer.showShadowMapDebug;
         }
 
         ImGuiIO& io = ImGui::GetIO();
         if (!io.WantCaptureMouse) {
             if (quilIsMouseButtonPressed(GLFW_MOUSE_BUTTON_1)) {
-                glm::vec3 cameraForward = glm::normalize(globals.renderer.camera.target - globals.renderer.camera.position);
-                glm::vec3 cameraRight = glm::normalize(glm::cross(globals.renderer.camera.up, cameraForward));
-                glm::vec2 mouseDelta = globals.window.mouseProperties.mousePosition - globals.window.mouseProperties.mousePositionLast;
-                globals.renderer.RotateCameraArount(-mouseDelta.x * globals.settings.mouseSensitivityMultiplier, glm::vec3(0, 1, 0), globals.renderer.camera.target);
-                globals.renderer.RotateCameraArount(mouseDelta.y * globals.settings.mouseSensitivityMultiplier, cameraRight, globals.renderer.camera.target);
+                glm::vec3 cameraForward = glm::normalize(application.renderer.camera.target - application.renderer.camera.position);
+                glm::vec3 cameraRight = glm::normalize(glm::cross(application.renderer.camera.up, cameraForward));
+                glm::vec2 mouseDelta = application.window.mouseProperties.mousePosition - application.window.mouseProperties.mousePositionLast;
+                application.renderer.RotateCameraArount(-mouseDelta.x * application.settings.mouseSensitivityMultiplier, glm::vec3(0, 1, 0), application.renderer.camera.target);
+                application.renderer.RotateCameraArount(mouseDelta.y * application.settings.mouseSensitivityMultiplier, cameraRight, application.renderer.camera.target);
             }
         }
 
-        globals.renderer.DrawActiveScene();
+        application.renderer.DrawActiveScene();
 
         DebugLayer::DrawDebugGUI();
 
         quilPollCallbacks();
-
-        globals.window.RefreshAndPoll();
+        application.window.RefreshAndPoll();
     }
 
-    globals.renderer.CleanUp();
-    globals.window.Close();
+    application.Close();
 
     return 0;
 }
