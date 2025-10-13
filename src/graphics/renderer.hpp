@@ -37,8 +37,10 @@ public:
     void UpdateCameraMatrices();
     static void UpdateTransform(Transform& transform);
     void UploadMaterialUniforms(Mesh& mesh);
+    void UploadTransformationDataUniforms(Mesh& mesh, glm::mat4 transform, glm::mat4 view, glm::mat4 projection, glm::mat4 lightView = glm::identity<glm::mat4>(), glm::mat4 lightProjection = glm::identity<glm::mat4>());
 
     bool showShadowMapDebug = false;
+    bool drawGrass = true;
 
     static void CreateMeshBuffers(Mesh& mesh);
 

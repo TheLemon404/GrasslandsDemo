@@ -1,5 +1,7 @@
 #version 410 core
 
+#include <transformation_data.glsl>
+
 layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aUV;
@@ -7,10 +9,7 @@ layout (location = 3) in mat4 aiTransform;
 
 uniform vec2 terrainSpaceUVBounds;
 
-uniform mat4 view;
-uniform mat4 projection;
-uniform mat4 lightView;
-uniform mat4 lightProjection;
+uniform TransformationData transformationData;
 
 uniform sampler2D heightMap;
 uniform float heightMapStrength;
@@ -55,9 +54,9 @@ void main()
 
     vec4 modifiedPosition = (worldPosition + vec4(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f, 0.0f));
 
-    gl_Position = projection * view * modifiedPosition;
+    gl_Position = transformationData.projection * transformationData.view * modifiedPosition;
     pNormal = normalize(normalMatrix * aNormal).xyz;
     pUV = aUV;
     pPosition = modifiedPosition.xyz;
-    fragPosLightSpace = lightProjection * lightView * modifiedPosition;
+    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * modifiedPosition;
 }

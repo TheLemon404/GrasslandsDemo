@@ -14,6 +14,7 @@
 #include "ext/matrix_clip_space.hpp"
 #include "ext/matrix_transform.hpp"
 #include "gtc/type_ptr.inl"
+#include "utils/parser.hpp"
 
 void Renderer::CreateMeshBuffers(Mesh& mesh) {
     glGenVertexArrays(1, &mesh.vao);
@@ -164,14 +165,15 @@ void Renderer::RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin)
 }
 
 Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath) {
-    const char* vertexShaderContent = globals.io.LoadShaderFileContents(vertexShaderLocalPath.c_str());
-    const char* fragmentShaderContent = globals.io.LoadShaderFileContents(fragmentShaderLocalPath.c_str());
+    SE::Util::Parser vertexParser(vertexShaderLocalPath.c_str());
+    SE::Util::Parser fragmentParser(fragmentShaderLocalPath.c_str());
 
     unsigned int vertexShaderId = 0, fragmentShaderId = 0, programId = 0;
 
     //vertex shader compilation
     vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShaderId, 1, &vertexShaderContent, nullptr);
+    const char* vertexCodeTemp = vertexParser.content.c_str();
+    glShaderSource(vertexShaderId, 1, &vertexCodeTemp, nullptr);
     glCompileShader(vertexShaderId);
     int vertexSuccess;
     char vertexInfoLog[512];
@@ -184,7 +186,8 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     //fragment shader compilationg
     fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShaderId, 1, &fragmentShaderContent, nullptr);
+    const char* fragmentCodeTemp = fragmentParser.content.c_str();
+    glShaderSource(fragmentShaderId, 1, &fragmentCodeTemp, nullptr);
     glCompileShader(fragmentShaderId);
     int fragmentSuccess;
     char fragmentInfoLog[512];
@@ -216,8 +219,8 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
     globals.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderLocalPath));
 
     return {
-        vertexShaderContent,
-        fragmentShaderContent,
+        vertexParser.content.c_str(),
+        fragmentParser.content.c_str(),
         vertexShaderId,
         fragmentShaderId,
         programId
@@ -376,16 +379,25 @@ void Renderer::UpdateTransform(Transform& transform) {
 }
 
 void Renderer::UploadMaterialUniforms(Mesh &mesh) {
-    UploadShaderUniformVec3(mesh.material.shaderProgramId, "albedo", mesh.material.albedo);
-    UploadShaderUniformFloat(mesh.material.shaderProgramId, "roughness", mesh.material.roughness);
+    UploadShaderUniformVec3(mesh.material.shaderProgramId, "material.albedo", mesh.material.albedo);
+    UploadShaderUniformFloat(mesh.material.shaderProgramId, "material.roughness", mesh.material.roughness);
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "hasBaseTexture", 0);
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "material.hasBaseTexture", 0);
     }
     else {
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "hasBaseTexture", 1);
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "material.baseTexture", 2);
+        UploadShaderUniformInt(mesh.material.shaderProgramId, "material.hasBaseTexture", 1);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, mesh.material.texture.id);
     }
+}
+
+void Renderer::UploadTransformationDataUniforms(Mesh &mesh, glm::mat4 transform, glm::mat4 view, glm::mat4 projection, glm::mat4 lightView, glm::mat4 lightProjection) {
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.transform", transform);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.view", view);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.projection", projection);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.lightView", lightView);
+    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.lightProjection", lightProjection);
 }
 
 void Renderer::Initialize() {
@@ -463,9 +475,7 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(2);
             glUseProgram(mesh.material.shaderProgramId);
 
-            UploadShaderUniformMat4(mesh.material.shaderProgramId, "transform", transformComponent.transform.matrix);
-            UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
-            UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
+            UploadTransformationDataUniforms(mesh, transformComponent.transform.matrix, lightView, lightProjection);
 
             globals.scene.InsertShadowDrawLogic(mesh, entity);
 
@@ -507,13 +517,7 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(2);
             glUseProgram(mesh.material.shaderProgramId);
 
-            for (int i = 0; i < instancedMeshComponent.transforms.size(); ++i) {
-                UpdateTransform(instancedMeshComponent.transforms[i]);
-                UploadShaderUniformMat4(mesh.material.shaderProgramId, std::string("transforms[" + std::to_string(i) + "]"), instancedMeshComponent.transforms[i].matrix);
-            }
-
-            UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
-            UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
+            UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), lightView, lightProjection);
 
             globals.scene.InsertInstancedShadowDrawLogic(mesh, entity);
 
@@ -559,13 +563,8 @@ void Renderer::DrawActiveScene() {
 
         UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
         UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
-        if (mesh.material.texture.id != 0) {
-            UploadShaderUniformInt(mesh.material.shaderProgramId, "baseTexture", 2);
-        }
 
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "transform", transformComponent.transform.matrix);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", camera.view);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", camera.projection);
+        UploadTransformationDataUniforms(mesh, transformComponent.transform.matrix, camera.view, camera.projection, lightView, lightProjection);
         UploadMaterialUniforms(mesh);
 
         //upload environment data
@@ -574,8 +573,6 @@ void Renderer::DrawActiveScene() {
         UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
         UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
         UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightView", lightView);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightProjection", lightProjection);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
@@ -614,17 +611,10 @@ void Renderer::DrawActiveScene() {
         glEnableVertexAttribArray(3);
         glUseProgram(mesh.material.shaderProgramId);
 
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", lightView);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", lightProjection);
-
         UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
         UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
-        if (mesh.material.texture.id != 0) {
-            UploadShaderUniformInt(mesh.material.shaderProgramId, "baseTexture", 2);
-        }
 
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "view", camera.view);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "projection", camera.projection);
+        UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), camera.view, camera.projection, lightView, lightProjection);
         UploadMaterialUniforms(mesh);
 
 
@@ -634,8 +624,6 @@ void Renderer::DrawActiveScene() {
         UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", globals.scene.environment.shadowColor);
         UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
         UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", globals.settings.blurDistance);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightView", lightView);
-        UploadShaderUniformMat4(mesh.material.shaderProgramId, "lightProjection", lightProjection);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 

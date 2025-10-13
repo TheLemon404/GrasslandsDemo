@@ -30,7 +30,9 @@ void DebugLayer::DrawDebugGUI() {
 
     //master debug window
     ImGui::Begin("Debug");
-    ImGui::Checkbox("RenderDebug", &globals.renderer.showShadowMapDebug);
+    ImGui::Checkbox("Show Shadow-Map Debug", &globals.renderer.showShadowMapDebug);
+    ImGui::Text("Delta Time: %lf", globals.clock.deltaTime);
+    ImGui::Text("FPS: %lf", 1.0 / globals.clock.deltaTime);
     ImGui::End();
 
     ImGui::Render();
