@@ -5,6 +5,8 @@
 struct Mesh;
 
 struct System {
+    virtual ~System() = default;
+
     virtual void Start(entt::registry& registry) = 0;
     virtual void Update(entt::registry& registry) = 0;
     virtual void InsertShadowDrawLogic(Mesh& mesh, entt::entity& entity) = 0;

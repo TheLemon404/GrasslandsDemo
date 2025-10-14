@@ -3,8 +3,10 @@
 #include <entt/entt.hpp>
 #include "components/terrain_component.hpp"
 #include "../graphics/renderer.hpp"
+#include "components/foliage_component.hpp"
 #include "components/instanced_mesh_component.hpp"
 #include "components/mesh_component.hpp"
+#include "systems/foliage_system.hpp"
 #include "systems/system.hpp"
 #include "systems/terrain_system.hpp"
 #include "world/environment.hpp"
@@ -33,11 +35,16 @@ struct GraphicsDemoScene : Scene {
         transformComponent.transform.position.y = 5.0f;
 
         entt::entity terrain = registry.create();
+        //for the terrain mesh
         registry.emplace<TransformComponent>(terrain);
         registry.emplace<MeshComponent>(terrain);
         registry.emplace<TerrainComponent>(terrain);
+        //for the grass foliage
         registry.emplace<InstancedMeshComponent>(terrain);
+        registry.emplace<FoliageComponent>(terrain);
 
+        //add all the needed systems to our scene
         systems.push_back(std::make_unique<TerrainSystem>());
+        systems.push_back(std::make_unique<FoliageSystem>());
     }
 };
