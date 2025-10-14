@@ -23,14 +23,17 @@ void FoliageSystem::Start(entt::registry &registry) {
         int sq = sqrt(foliageComponent.numInstances);
         for (int i = 0; i < sq; i++) {
             for (int j = 0; j < sq; j++) {
-                Transform t = {};
                 float x = static_cast<float>(i) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
                 float z = static_cast<float>(j) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-                t.rotation.y = static_cast<float>(rand());
-                t.scale = glm::vec3(0.5f, 0.5f, 0.5f);
-                t.position = {x * (float)terrain.dimensions.x / sq, 0.0f,  z * (float)terrain.dimensions.y / sq};
-                Renderer::UpdateTransform(t);
-                grassInstancedMesh.transforms.push_back(t);
+
+                if (glm::distance(glm::vec2(x, z), glm::vec2(0,0)) <= foliageComponent.cameraCutoffDistance) {
+                    Transform t = {};
+                    t.rotation.y = static_cast<float>(rand());
+                    t.scale = glm::vec3(0.5f, 0.5f, 0.5f);
+                    t.position = {x * (float)terrain.dimensions.x / sq, 0.0f,  z * (float)terrain.dimensions.y / sq};
+                    Renderer::UpdateTransform(t);
+                    grassInstancedMesh.transforms.push_back(t);
+                }
             }
         }
 
@@ -81,6 +84,8 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
+        Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "cameraTerrainCoords", glm::vec2(application.renderer.camera.position.x, application.renderer.camera.position.z));
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
 
