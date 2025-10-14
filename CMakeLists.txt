@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31)
-project(Chess3D)
+project(GrasslandsDemo)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -13,7 +13,7 @@ add_subdirectory(submodules/glm)
 add_subdirectory(submodules/entt)
 
 file(GLOB_RECURSE src CONFIGURE_DEPENDS src/*.cpp src/*.hpp)
-add_executable(Chess3D
+add_executable(GrasslandsDemo
         ${src}
         ${imgui_src}
         submodules/imgui/backends/imgui_impl_glfw.cpp
@@ -23,8 +23,8 @@ add_executable(Chess3D
         external/glad/src/glad.c
 )
 
-target_include_directories(Chess3D PRIVATE external/glad/include submodules/glm/glm submodules/imgui)
+target_include_directories(GrasslandsDemo PRIVATE external/glad/include submodules/glm/glm submodules/imgui)
 
-target_link_libraries(Chess3D PRIVATE QuIL glfw tinyobjloader glm EnTT::EnTT)
+target_link_libraries(GrasslandsDemo PRIVATE QuIL glfw tinyobjloader glm EnTT::EnTT)
 
 file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})

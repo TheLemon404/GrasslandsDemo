@@ -144,7 +144,7 @@ void TerrainSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrain.dimensions / 2);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)application.clock.time);
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.678f, 0.859f, 0.522f));
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.812f, 0.922f, 0.573f));
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.898f, 0.98f, 0.659f));
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);

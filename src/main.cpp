@@ -37,8 +37,15 @@ int main() {
                 glm::vec3 cameraForward = glm::normalize(application.renderer.camera.target - application.renderer.camera.position);
                 glm::vec3 cameraRight = glm::normalize(glm::cross(application.renderer.camera.up, cameraForward));
                 glm::vec2 mouseDelta = application.window.mouseProperties.mousePosition - application.window.mouseProperties.mousePositionLast;
-                application.renderer.RotateCameraArount(-mouseDelta.x * application.settings.mouseSensitivityMultiplier, glm::vec3(0, 1, 0), application.renderer.camera.target);
-                application.renderer.RotateCameraArount(mouseDelta.y * application.settings.mouseSensitivityMultiplier, cameraRight, application.renderer.camera.target);
+                application.renderer.RotateCameraArount(-mouseDelta.x * application.settings.mouseLookSensitivity, glm::vec3(0, 1, 0), application.renderer.camera.target);
+                application.renderer.RotateCameraArount(mouseDelta.y * application.settings.mouseLookSensitivity, cameraRight, application.renderer.camera.target);
+            }
+            else if (quilIsMouseButtonPressed(GLFW_MOUSE_BUTTON_2)) {
+                glm::vec2 mouseDelta = application.window.mouseProperties.mousePosition - application.window.mouseProperties.mousePositionLast;
+                glm::vec3 forward = glm::normalize(glm::vec3(application.renderer.camera.view[0][2], 0, application.renderer.camera.view[2][2]));
+                glm::vec3 right = glm::normalize(glm::vec3(application.renderer.camera.view[0][0], 0, application.renderer.camera.view[2][0]));
+                application.renderer.camera.target -= (forward * mouseDelta.y + right * mouseDelta.x) * application.settings.mouseMoveSensitivity;
+                application.renderer.camera.position -= (forward * mouseDelta.y + right * mouseDelta.x) * application.settings.mouseMoveSensitivity;
             }
         }
 
