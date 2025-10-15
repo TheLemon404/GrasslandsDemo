@@ -41,7 +41,7 @@ float random(vec2 co) {
 void main()
 {
     //grass curving and wind
-    vec4 tempWorldPosition = aiTransform * vec4(aPosition, 1.0f);
+    vec4 tempWorldPosition = (aiTransform * vec4(aPosition, 1.0f));
     terrainSpaceUV = ((vec2(tempWorldPosition.x, tempWorldPosition.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
 
     float windAmount = texture(perlinTexture, terrainSpaceUV + vec2(time / 35)).r;
@@ -49,7 +49,7 @@ void main()
     float curveAmount = aUV.y * 0.5 + (n / 15);
     mat4 curveMatrix = rotateX(curveAmount + (windAmount / 3));
 
-    vec4 worldPosition = aiTransform * (vec4(aPosition, 1.0f) * curveMatrix);
+    vec4 worldPosition = (aiTransform * (vec4(aPosition, 1.0f) * curveMatrix));
     mat3 normalMatrix = mat3(transpose(inverse(aiTransform)));
 
     vec4 modifiedPosition = (worldPosition + vec4(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f, 0.0f));
