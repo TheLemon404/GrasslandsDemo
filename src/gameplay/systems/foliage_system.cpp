@@ -1,10 +1,8 @@
 #include "foliage_system.hpp"
-
 #include "../../application.hpp"
 #include "../../graphics/renderer.hpp"
 #include "../components/foliage_component.hpp"
 #include "../components/instanced_mesh_component.hpp"
-#include "../components/mesh_component.hpp"
 #include "glad/glad.h"
 
 void FoliageSystem::Start(entt::registry &registry) {
@@ -84,7 +82,6 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
-        Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "cameraTerrainCoords", glm::vec2(application.renderer.camera.position.x, application.renderer.camera.position.z));
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
