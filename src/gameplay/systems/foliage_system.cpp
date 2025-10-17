@@ -11,8 +11,9 @@ void FoliageSystem::Start(entt::registry &registry) {
         TerrainComponent& terrain = registry.get<TerrainComponent>(entity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         InstancedMeshComponent& grassInstancedMesh = registry.get<InstancedMeshComponent>(entity);
-        grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
+        grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/bid_billboard.obj", "resources/meshes/bid_billboard.mtl", true);
         grassInstancedMesh.mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
+        grassInstancedMesh.mesh.material.texture = Texture::LoadTextureFromFile("resources/textures/grass_texture.png", 4, false, true);
         grassInstancedMesh.mesh.material.roughness = 1.0f;
         grassInstancedMesh.mesh.material.shaderProgramId = application.renderer.grassInstancedShader.programId;
         grassInstancedMesh.mesh.cullBackface = false;

@@ -5,5 +5,5 @@ struct Texture {
     int width, height;
     int nrChannels = 4;
 
-    static Texture LoadTextureFromFile(const char* path, int textureFormat = 4, bool repeat = true);
+    static Texture LoadTextureFromFile(const char* path, int textureFormat = 4, bool repeat = true, bool pointFilter = false);
 };

@@ -18,6 +18,10 @@ bool Window::Initialize(unsigned int width, unsigned int height, const char* tit
     }
 
     glfwWindowHint(GLFW_SAMPLES, application.settings.msaaSamples);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
     glfwWindow = glfwCreateWindow(width, height, title, nullptr, nullptr);
 

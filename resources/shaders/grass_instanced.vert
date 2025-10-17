@@ -46,7 +46,7 @@ void main()
 
     float windAmount = texture(perlinTexture, terrainSpaceUV + vec2(time / 35)).r;
     float n = cos(time + tempWorldPosition.x + tempWorldPosition.z + 25 * random(tempWorldPosition.xz));
-    float curveAmount = aUV.y * 0.5 + (n / 15);
+    float curveAmount = aUV.y * 0.25 + (n / 15);
     mat4 curveMatrix = rotateX(curveAmount + (windAmount / 3));
 
     vec4 worldPosition = (aiTransform * (vec4(aPosition, 1.0f) * curveMatrix));

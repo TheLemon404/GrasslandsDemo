@@ -5,7 +5,7 @@
 #include "glad/glad.h"
 #include "../../application.hpp"
 
-Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool repeat) {
+Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool repeat, bool pointFilter) {
     Texture texture = {
         .nrChannels = textureFormat,
     };
@@ -19,8 +19,15 @@ Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool r
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    if (pointFilter) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
 
     unsigned char *data = stbi_load(path, &texture.width, &texture.height, &texture.nrChannels, 0);
     if (data)

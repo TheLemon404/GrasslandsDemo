@@ -28,7 +28,7 @@ struct Application {
     }
 
     bool Initialize() {
-        if (!window.Initialize(1200, 800, "Chess3D")) {
+        if (!window.Initialize(1200, 800, "GrasslandsDemo")) {
             return false;
         }
         renderer.Initialize();

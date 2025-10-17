@@ -412,6 +412,8 @@ void Renderer::Initialize() {
 
     UpdateCameraMatrices();
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     glFrontFace(GL_CW);
@@ -544,6 +546,14 @@ void Renderer::DrawActiveScene() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(application.scene.environment.clearColor.r, application.scene.environment.clearColor.g, application.scene.environment.clearColor.b, 1.0f);
 
+
+    if (drawWireframe) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     //regular mesh rendering logic
     for (auto entity : view) {
         TransformComponent transformComponent = application.scene.registry.get<TransformComponent>(entity);
@@ -596,55 +606,57 @@ void Renderer::DrawActiveScene() {
         InstancedMeshComponent& instancedMeshComponent = view2.get<InstancedMeshComponent>(entity);
         Mesh mesh = instancedMeshComponent.mesh;
 
-        if (!mesh.cullBackface) {
-            glDisable(GL_CULL_FACE);
-        }
+        if ((drawGrass && instancedMeshComponent.mesh.material.shaderProgramId == grassInstancedShader.programId) || instancedMeshComponent.mesh.material.shaderProgramId != grassInstancedShader.programId) {
+            if (!mesh.cullBackface) {
+                glDisable(GL_CULL_FACE);
+            }
 
-        if (mesh.vao == 0) {
-            application.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
-        }
+            if (mesh.vao == 0) {
+                application.logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
+            }
 
-        glBindVertexArray(mesh.vao);
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
-        glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
-        glUseProgram(mesh.material.shaderProgramId);
+            glBindVertexArray(mesh.vao);
+            glEnableVertexAttribArray(0);
+            glEnableVertexAttribArray(1);
+            glEnableVertexAttribArray(2);
+            glEnableVertexAttribArray(3);
+            glUseProgram(mesh.material.shaderProgramId);
 
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
+            UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
+            UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
 
-        UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), camera.view, camera.projection, lightView, lightProjection);
-        UploadMaterialUniforms(mesh);
+            UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), camera.view, camera.projection, lightView, lightProjection);
+            UploadMaterialUniforms(mesh);
 
 
-        //upload environment data
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", application.scene.environment.sunDirection);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", application.scene.environment.sunColor);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", application.scene.environment.shadowColor);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
-        UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", application.settings.blurDistance);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
+            //upload environment data
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", application.scene.environment.sunDirection);
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", application.scene.environment.sunColor);
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", application.scene.environment.shadowColor);
+            UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
+            UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", application.settings.blurDistance);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
-        application.scene.InsertInstancedDrawLogic(mesh, entity);
+            application.scene.InsertInstancedDrawLogic(mesh, entity);
 
-        if (!mesh.indices.empty()) {
-            glDrawElementsInstanced(GL_TRIANGLES,  mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedMeshComponent.transforms.size());
-        }
-        else {
-            glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertices.size() / 3, instancedMeshComponent.transforms.size());
-        }
+            if (!mesh.indices.empty()) {
+                glDrawElementsInstanced(GL_TRIANGLES,  mesh.indices.size(), GL_UNSIGNED_INT, 0, instancedMeshComponent.transforms.size());
+            }
+            else {
+                glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertices.size() / 3, instancedMeshComponent.transforms.size());
+            }
 
-        glUseProgram(0);
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
-        glDisableVertexAttribArray(2);
-        glDisableVertexAttribArray(3);
-        glBindVertexArray(0);
+            glUseProgram(0);
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
+            glDisableVertexAttribArray(3);
+            glBindVertexArray(0);
 
-        if (!mesh.cullBackface) {
-            glEnable(GL_CULL_FACE);
+            if (!mesh.cullBackface) {
+                glEnable(GL_CULL_FACE);
+            }
         }
     }
 

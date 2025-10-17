@@ -40,6 +40,7 @@ public:
 
     bool showShadowMapDebug = false;
     bool drawGrass = true;
+    bool drawWireframe = false;
 
     static void CreateMeshBuffers(Mesh& mesh);
 
