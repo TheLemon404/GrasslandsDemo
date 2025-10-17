@@ -16,6 +16,7 @@ uniform float heightMapStrength;
 
 uniform float time;
 uniform sampler2D perlinTexture;
+uniform float windSwayAmount;
 
 layout (location = 0) out vec3 pPosition;
 layout (location = 1) out vec3 pNormal;
@@ -34,29 +35,28 @@ mat4 rotateX(float angle) {
     );
 }
 
-float random(vec2 co) {
-    return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
-}
+#include <shader_utils.glsl>
 
 void main()
 {
     //grass curving and wind
-    vec4 tempWorldPosition = (aiTransform * vec4(aPosition, 1.0f));
-    terrainSpaceUV = ((vec2(tempWorldPosition.x, tempWorldPosition.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
+    vec4 preCurvedWorldPosition = (aiTransform * vec4(aPosition, 1.0f));
+    terrainSpaceUV = ((vec2(preCurvedWorldPosition.x, preCurvedWorldPosition.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
 
     float windAmount = texture(perlinTexture, terrainSpaceUV + vec2(time / 35)).r;
-    float n = cos(time + tempWorldPosition.x + tempWorldPosition.z + 25 * random(tempWorldPosition.xz));
-    float curveAmount = aUV.y * 0.25 + (n / 15);
+    float n = cos(time + preCurvedWorldPosition.x + preCurvedWorldPosition.z + 25 * random(preCurvedWorldPosition.xz));
+    float curveAmount = aUV.y * windSwayAmount + (n / 15);
     mat4 curveMatrix = rotateX(curveAmount + (windAmount / 3));
 
-    vec4 worldPosition = (aiTransform * (vec4(aPosition, 1.0f) * curveMatrix));
+    vec4 CurvedWorldPosition = (aiTransform * (vec4(aPosition, 1.0f) * curveMatrix));
     mat3 normalMatrix = mat3(transpose(inverse(aiTransform)));
 
-    vec4 modifiedPosition = (worldPosition + vec4(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f, 0.0f));
+    vec4 heightOffsetPosition = (CurvedWorldPosition + vec4(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f, 0.0f));
 
-    gl_Position = transformationData.projection * transformationData.view * modifiedPosition;
+    gl_Position = transformationData.projection * transformationData.view * heightOffsetPosition;
+
     pNormal = normalize(normalMatrix * aNormal).xyz;
     pUV = aUV;
-    pPosition = modifiedPosition.xyz;
-    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * modifiedPosition;
+    pPosition = heightOffsetPosition.xyz;
+    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * heightOffsetPosition;
 }

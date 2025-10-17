@@ -67,28 +67,26 @@ void FoliageSystem::Start(entt::registry &registry) {
     }
 }
 
-void FoliageSystem::Update(entt::registry& registry) {
-
-}
-
 void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
     if (application.scene.registry.try_get<TerrainComponent>(entity) && application.scene.registry.try_get<FoliageComponent>(entity)) {
-        TerrainComponent terrain = application.scene.registry.get<TerrainComponent>(entity);
+        TerrainComponent terrainComponent = application.scene.registry.get<TerrainComponent>(entity);
+        FoliageComponent foliageComponent = application.scene.registry.get<FoliageComponent>(entity);
 
-        Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrain.dimensions / 2);
+        Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)application.clock.time);
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.678f, 0.859f, 0.522f));
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.898f, 0.98f, 0.659f));
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrainComponent.maxHeight);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "windSwayAmount", foliageComponent.windSwayAmount);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
+        glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
 
         glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, terrain.perlinNoiseTexture.id);
+        glBindTexture(GL_TEXTURE_2D, terrainComponent.perlinNoiseTexture.id);
     }
 }
 

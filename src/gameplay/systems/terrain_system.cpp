@@ -70,17 +70,13 @@ void TerrainSystem::Start(entt::registry& registry) {
     }
 }
 
-void TerrainSystem::Update(entt::registry& registry) {
-
-}
-
 void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
     if (application.scene.registry.try_get<TerrainComponent>(entity)) {
-        TerrainComponent terrain = application.scene.registry.get<TerrainComponent>(entity);
+        TerrainComponent terrainComponent = application.scene.registry.get<TerrainComponent>(entity);
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrain.maxHeight);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrainComponent.maxHeight);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, terrain.heightMapTexture.id);
+        glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
     }
 }

@@ -38,6 +38,7 @@ void main() {
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
     float spec = pow(max(dot(viewDirection, reflectDirection), 0.2f), 32);
+
     vec3 finalSpecular = (1.0 - material.roughness) * spec * sunColor;
 
     float shadow = 0.0f;
@@ -46,7 +47,7 @@ void main() {
     }
 
     vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
-    vec4 final = vec4(lighting, 1.0f);
-    fragColor = final;
+    fragColor = vec4(lighting, 1.0f);
+
     gl_FragDepth = gl_FragCoord.z;
 }

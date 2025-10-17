@@ -17,7 +17,9 @@ layout (location = 3) out vec4 fragPosLightSpace;
 void main()
 {
     mat3 normalMatrix = mat3(transpose(inverse(aiTransform)));
+
     gl_Position = transformationData.projection * transformationData.view * aiTransform * vec4(aPosition, 1.0f);
+
     pNormal = normalize(normalMatrix * aNormal).xyz;
     pUV = aUV;
     pPosition = (aiTransform * vec4(aPosition, 1.0f)).xyz;

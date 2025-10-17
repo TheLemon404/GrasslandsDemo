@@ -24,5 +24,5 @@ float shadowCalculation(vec3 normal) {
 
     if(projCoords.z > 1.0) shadow = 0.0;
 
-    return min(shadow, 0.8f);
+    return shadow;
 }
