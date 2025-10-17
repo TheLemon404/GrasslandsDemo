@@ -1,11 +1,14 @@
-#version 410 core
+#version 430 core
 
 #include <transformation_data.glsl>
 
 layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aUV;
-layout (location = 3) in mat4 aiTransform;
+
+layout (binding = 2, std430) readonly buffer ssbo {
+    mat4 transformMatrices[];
+};
 
 uniform vec2 terrainSpaceUVBounds;
 
@@ -40,7 +43,7 @@ mat4 rotateX(float angle) {
 void main()
 {
     //grass curving and wind
-    vec4 preCurvedWorldPosition = (aiTransform * vec4(aPosition, 1.0f));
+    vec4 preCurvedWorldPosition = (transformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f));
     terrainSpaceUV = ((vec2(preCurvedWorldPosition.x, preCurvedWorldPosition.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
 
     float windAmount = texture(perlinTexture, terrainSpaceUV + vec2(time / 35)).r;
@@ -48,8 +51,8 @@ void main()
     float curveAmount = aUV.y * windSwayAmount + (n / 15);
     mat4 curveMatrix = rotateX(curveAmount + (windAmount / 3));
 
-    vec4 CurvedWorldPosition = (aiTransform * (vec4(aPosition, 1.0f) * curveMatrix));
-    mat3 normalMatrix = mat3(transpose(inverse(aiTransform)));
+    vec4 CurvedWorldPosition = (transformMatrices[gl_InstanceID] * (vec4(aPosition, 1.0f) * curveMatrix));
+    mat3 normalMatrix = mat3(transpose(inverse(transformMatrices[gl_InstanceID])));
 
     vec4 heightOffsetPosition = (CurvedWorldPosition + vec4(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f, 0.0f));
 

@@ -42,28 +42,9 @@ void FoliageSystem::Start(entt::registry &registry) {
             matrices.push_back(t.matrix);
         }
 
-        glGenBuffers(1, &grassInstancedMesh.instancedVBO);
-        glBindBuffer(GL_ARRAY_BUFFER, grassInstancedMesh.instancedVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::mat4) * grassInstancedMesh.transforms.size(), &matrices[0], GL_STATIC_DRAW);
-
-        std::size_t vec4size = sizeof(glm::vec4);
-        glBindVertexArray(grassInstancedMesh.mesh.vao);
-
-        glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)0);
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(1 * vec4size));
-        glEnableVertexAttribArray(5);
-        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(2 * vec4size));
-        glEnableVertexAttribArray(6);
-        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)(3 * vec4size));
-
-        glVertexAttribDivisor(3, 1);
-        glVertexAttribDivisor(4, 1);
-        glVertexAttribDivisor(5, 1);
-        glVertexAttribDivisor(6, 1);
-
-        glBindVertexArray(0);
+        //ssbos
+        glCreateBuffers(1, &foliageComponent.transformSSBO);
+        glNamedBufferStorage(foliageComponent.transformSSBO, sizeof(glm::mat4) * foliageComponent.numInstances, (const void *)matrices.data(), GL_DYNAMIC_STORAGE_BIT);
     }
 }
 
@@ -87,6 +68,8 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
 
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.perlinNoiseTexture.id);
+
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, foliageComponent.transformSSBO);
     }
 }
 
