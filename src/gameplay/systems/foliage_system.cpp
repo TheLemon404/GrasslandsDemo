@@ -10,14 +10,14 @@ void FoliageSystem::Start(entt::registry &registry) {
     for (auto& entity : view) {
         TerrainComponent& terrain = registry.get<TerrainComponent>(entity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
-        InstancedMeshComponent& grassInstancedMesh = registry.get<InstancedMeshComponent>(entity);
-        grassInstancedMesh.mesh = Renderer::LoadMeshAsset("resources/meshes/bid_billboard.obj", "resources/meshes/bid_billboard.mtl", true);
-        grassInstancedMesh.mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
-        grassInstancedMesh.mesh.material.texture = Texture::LoadTextureFromFile("resources/textures/grass_texture.png", 4, false, true);
-        grassInstancedMesh.mesh.material.roughness = 1.0f;
-        grassInstancedMesh.mesh.material.shaderProgramId = application.renderer.grassInstancedShader.programId;
-        grassInstancedMesh.mesh.cullBackface = false;
-        grassInstancedMesh.mesh.castsShadow = false;
+        InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
+        instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/bid_billboard.obj", "resources/meshes/bid_billboard.mtl", true);
+        instancedMeshComponent.mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
+        instancedMeshComponent.mesh.material.texture = Texture::LoadTextureFromFile("resources/textures/grass_texture.png", 4, false, true);
+        instancedMeshComponent.mesh.material.roughness = 1.0f;
+        instancedMeshComponent.mesh.material.shaderProgramId = application.renderer.grassInstancedShader.programId;
+        instancedMeshComponent.mesh.cullBackface = false;
+        instancedMeshComponent.mesh.castsShadow = false;
 
         int sq = sqrt(foliageComponent.numInstances);
         for (int i = 0; i < sq; i++) {
@@ -31,26 +31,27 @@ void FoliageSystem::Start(entt::registry &registry) {
                     t.scale = glm::vec3(0.5f, 0.5f, 0.5f);
                     t.position = {x * (float)terrain.dimensions.x / sq, 0.0f,  z * (float)terrain.dimensions.y / sq};
                     Renderer::UpdateTransform(t);
-                    grassInstancedMesh.transforms.push_back(t);
+                    instancedMeshComponent.transforms.push_back(t);
                 }
             }
         }
 
         //collect the matricies from the transforms objects
         std::vector<glm::mat4> matrices;
-        for (Transform& t : grassInstancedMesh.transforms) {
+        for (Transform& t : instancedMeshComponent.transforms) {
             matrices.push_back(t.matrix);
         }
 
         //ssbos
-        glCreateBuffers(1, &foliageComponent.transformSSBO);
-        glNamedBufferStorage(foliageComponent.transformSSBO, sizeof(glm::mat4) * foliageComponent.numInstances, (const void *)matrices.data(), GL_DYNAMIC_STORAGE_BIT);
+        glCreateBuffers(1, &instancedMeshComponent.instancedSSBO);
+        glNamedBufferStorage(instancedMeshComponent.instancedSSBO, sizeof(glm::mat4) * foliageComponent.numInstances, (const void *)matrices.data(), GL_DYNAMIC_STORAGE_BIT);
     }
 }
 
 void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
     if (application.scene.registry.try_get<TerrainComponent>(entity) && application.scene.registry.try_get<FoliageComponent>(entity)) {
         TerrainComponent terrainComponent = application.scene.registry.get<TerrainComponent>(entity);
+        InstancedMeshComponent instancedMeshComponent = application.scene.registry.get<InstancedMeshComponent>(entity);
         FoliageComponent foliageComponent = application.scene.registry.get<FoliageComponent>(entity);
 
         Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
@@ -69,7 +70,7 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.perlinNoiseTexture.id);
 
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, foliageComponent.transformSSBO);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, instancedMeshComponent.instancedSSBO);
     }
 }
 

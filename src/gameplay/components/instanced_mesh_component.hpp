@@ -3,6 +3,6 @@
 
 struct InstancedMeshComponent {
     std::vector<Transform> transforms;
-    unsigned int instancedVBO;
+    unsigned int instancedSSBO;
     Mesh mesh;
 };

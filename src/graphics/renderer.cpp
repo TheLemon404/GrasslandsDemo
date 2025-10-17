@@ -568,7 +568,6 @@ void Renderer::DrawActiveScene() {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
-        glEnableVertexAttribArray(3);
         glUseProgram(mesh.material.shaderProgramId);
 
         UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
@@ -619,7 +618,6 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
             glEnableVertexAttribArray(2);
-            glEnableVertexAttribArray(3);
             glUseProgram(mesh.material.shaderProgramId);
 
             UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
@@ -651,7 +649,6 @@ void Renderer::DrawActiveScene() {
             glDisableVertexAttribArray(0);
             glDisableVertexAttribArray(1);
             glDisableVertexAttribArray(2);
-            glDisableVertexAttribArray(3);
             glBindVertexArray(0);
 
             if (!mesh.cullBackface) {
