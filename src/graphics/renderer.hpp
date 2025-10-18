@@ -56,10 +56,12 @@ public:
     void RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin);
 
     static Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath);
+    static ComputeShader CreateComputeShader(std::string computeShaderLocalPath);
     static void UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix);
     static void UploadShaderUniformVec4(unsigned int programId, std::string uniformName, glm::vec4 vector);
     static void UploadShaderUniformVec3(unsigned int programId, std::string uniformName, glm::vec3 vector);
     static void UploadShaderUniformVec2(unsigned int programId, std::string uniformName, glm::vec2 vector);
+    static void UploadShaderUniformIVec2(unsigned int programId, std::string uniformName, glm::ivec2 vector);
     static void UploadShaderUniformFloat(unsigned int programId, std::string uniformName, float value);
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 

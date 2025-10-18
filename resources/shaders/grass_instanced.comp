@@ -1,0 +1,27 @@
+#version 430 core
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout (binding = 2, std430) buffer ssbo {
+    mat4 transformMatrices[];
+};
+
+uniform ivec2 dimensions;
+uniform int sq;
+
+#include <shader_utils.glsl>
+#include <matrix_math.glsl>
+
+void main() {
+    float x = gl_WorkGroupID.x - sq / 2.0 + random(vec2(gl_WorkGroupID.x, gl_WorkGroupID.y));
+    float z = gl_WorkGroupID.y - sq / 2.0 + random(vec2(gl_WorkGroupID.x, gl_WorkGroupID.y));
+
+    vec3 scaleVector = vec3(1);
+    float rotate = random(vec2(x, z));
+    vec3 position = vec3(x * dimensions.x / sq, 0.0, z * dimensions.y / sq);
+
+    mat4 transform = translate(position) * rotateY(rotate) * scale(scaleVector);
+
+    uint index = gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x;
+    transformMatrices[index] = transform;
+}

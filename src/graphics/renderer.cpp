@@ -4,6 +4,7 @@
 
 #include "tiny_obj_loader.h"
 #include <cassert>
+#include <iostream>
 #include <regex>
 #include <glad/glad.h>
 #include "../application.hpp"
@@ -181,7 +182,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     if(!vertexSuccess) {
         glGetShaderInfoLog(vertexShaderId, 512, nullptr, vertexInfoLog);
-        application.logger.ThrowRuntimeError(vertexInfoLog);
+        application.logger.ThrowRuntimeError("Vertex Shader error at: " + vertexShaderLocalPath + " : " + vertexInfoLog);
     }
 
     //fragment shader compilationg
@@ -195,7 +196,7 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     if(!fragmentSuccess) {
         glGetShaderInfoLog(fragmentShaderId, 512, nullptr, fragmentInfoLog);
-        application.logger.ThrowRuntimeError(fragmentInfoLog);
+        application.logger.ThrowRuntimeError("Fragment Shader error at: " + fragmentShaderLocalPath + " : " + fragmentInfoLog);
     }
 
     programId = glCreateProgram();
@@ -227,6 +228,49 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
     };
 }
 
+ComputeShader Renderer::CreateComputeShader(std::string computeShaderLocalPath) {
+    SE::Util::Parser computeParser(computeShaderLocalPath.c_str());
+
+    unsigned int computeShaderId = 0, programId = 0;
+
+    //vertex shader compilation
+    computeShaderId = glCreateShader(GL_COMPUTE_SHADER);
+    const char* vertexCodeTemp = computeParser.content.c_str();
+    glShaderSource(computeShaderId, 1, &vertexCodeTemp, nullptr);
+    glCompileShader(computeShaderId);
+    int computeSuccess;
+    char computeInfoLog[512];
+    glGetShaderiv(computeShaderId, GL_COMPILE_STATUS, &computeSuccess);
+
+    if(!computeSuccess) {
+        glGetShaderInfoLog(computeShaderId, 512, nullptr, computeInfoLog);
+        application.logger.ThrowRuntimeError(computeInfoLog);
+    }
+
+    programId = glCreateProgram();
+
+    glAttachShader(programId, computeShaderId);
+    glLinkProgram(programId);
+
+    glDeleteShader(computeShaderId);
+
+    int programSuccess;
+    char programInfoLog[512];
+    glGetProgramiv(programId, GL_LINK_STATUS, &programSuccess);
+    if(!programSuccess) {
+        glGetProgramInfoLog(programId, 512, nullptr, programInfoLog);
+        application.logger.ThrowRuntimeError("Compute Shader error at: " + computeShaderLocalPath + " : " + programInfoLog);
+    }
+
+    application.logger.Log("successfully compiled compute shader: " + std::string(computeShaderLocalPath));
+
+    return {
+        computeParser.content.c_str(),
+        computeShaderId,
+        programId
+    };
+}
+
 void Renderer::UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix) {
     int location = glGetUniformLocation(programId, uniformName.c_str());
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
@@ -245,6 +289,11 @@ void Renderer::UploadShaderUniformVec3(unsigned int programId, std::string unifo
 void Renderer::UploadShaderUniformVec2(unsigned int programId, std::string uniformName, glm::vec2 vector) {
     int location = glGetUniformLocation(programId, uniformName.c_str());
     glUniform2fv(location, 1, glm::value_ptr(vector));
+}
+
+void Renderer::UploadShaderUniformIVec2(unsigned int programId, std::string uniformName, glm::ivec2 vector) {
+    int location = glGetUniformLocation(programId, uniformName.c_str());
+    glUniform2iv(location, 1, glm::value_ptr(vector));
 }
 
 void Renderer::UploadShaderUniformFloat(unsigned int programId, std::string uniformName, float value) {

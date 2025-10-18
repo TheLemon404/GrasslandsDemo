@@ -11,40 +11,31 @@ void FoliageSystem::Start(entt::registry &registry) {
         TerrainComponent& terrain = registry.get<TerrainComponent>(entity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
-        instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/bid_billboard.obj", "resources/meshes/bid_billboard.mtl", true);
-        instancedMeshComponent.mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
-        instancedMeshComponent.mesh.material.texture = Texture::LoadTextureFromFile("resources/textures/grass_texture.png", 4, false, true);
+        instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
         instancedMeshComponent.mesh.material.roughness = 1.0f;
         instancedMeshComponent.mesh.material.shaderProgramId = application.renderer.grassInstancedShader.programId;
         instancedMeshComponent.mesh.cullBackface = false;
         instancedMeshComponent.mesh.castsShadow = false;
 
-        int sq = sqrt(foliageComponent.numInstances);
-        for (int i = 0; i < sq; i++) {
-            for (int j = 0; j < sq; j++) {
-                float x = static_cast<float>(i) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-                float z = static_cast<float>(j) - sq / 2 + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-
-                if (glm::distance(glm::vec2(x, z), glm::vec2(0,0)) <= foliageComponent.cameraCutoffDistance) {
-                    Transform t = {};
-                    t.rotation.y = static_cast<float>(rand());
-                    t.scale = glm::vec3(0.5f, 0.5f, 0.5f);
-                    t.position = {x * (float)terrain.dimensions.x / sq, 0.0f,  z * (float)terrain.dimensions.y / sq};
-                    Renderer::UpdateTransform(t);
-                    instancedMeshComponent.transforms.push_back(t);
-                }
-            }
-        }
-
-        //collect the matricies from the transforms objects
-        std::vector<glm::mat4> matrices;
-        for (Transform& t : instancedMeshComponent.transforms) {
-            matrices.push_back(t.matrix);
-        }
+        //to compute the placement of the grass in a compute shader
+        foliageComponent.foliagePlacementComputeShader = Renderer::CreateComputeShader("resources/shaders/grass_instanced.comp");
 
         //ssbos
-        glCreateBuffers(1, &instancedMeshComponent.instancedSSBO);
-        glNamedBufferStorage(instancedMeshComponent.instancedSSBO, sizeof(glm::mat4) * foliageComponent.numInstances, (const void *)matrices.data(), GL_DYNAMIC_STORAGE_BIT);
+        glGenBuffers(1, &instancedMeshComponent.instancedSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, instancedMeshComponent.instancedSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * foliageComponent.numInstances, nullptr, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, instancedMeshComponent.instancedSSBO);
+
+        int sq = sqrt(foliageComponent.numInstances);
+
+        glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "dimensions", terrain.dimensions);
+        Renderer::UploadShaderUniformInt(foliageComponent.foliagePlacementComputeShader.programId, "sq", sq);
+        glDispatchCompute(sq, sq, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        //this is not good practice, but I need to trick the renderer to draw the correct number of instances
+        instancedMeshComponent.transforms.resize(sq * sq);
     }
 }
 
@@ -56,21 +47,21 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
 
         Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)application.clock.time);
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.678f, 0.859f, 0.522f));
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.898f, 0.98f, 0.659f));
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.478, 0.702, 0.384));
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.745, 0.941, 0.663));
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrainComponent.maxHeight);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "windSwayAmount", foliageComponent.windSwayAmount);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "breezeAmount", foliageComponent.breezeAmount);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "windAmount", foliageComponent.windAmount);
+        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "windAngle", foliageComponent.windAngle);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
 
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.perlinNoiseTexture.id);
-
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, instancedMeshComponent.instancedSSBO);
     }
 }
 
