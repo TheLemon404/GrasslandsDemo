@@ -46,7 +46,7 @@ void main()
     mat4 breezeCurveMatrix = rotateX(breezeCurveAmount + (wind / 3));
 
     float windCurveAmount = aUV.y * wind;
-    mat4 windCurveMatrix = rotateY(windCurveAmount * windAmount, windAngle);
+    mat4 windCurveMatrix = rotateY(windCurveAmount * windAmount);
 
     vec4 CurvedWorldPosition = (transformMatrices[gl_InstanceID] * (vec4(aPosition, 1.0f) * breezeCurveMatrix * windCurveMatrix));
     mat3 normalMatrix = mat3(transpose(inverse(transformMatrices[gl_InstanceID])));

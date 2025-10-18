@@ -65,7 +65,7 @@ void TerrainSystem::Start(entt::registry& registry) {
 
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shaderProgramId = application.renderer.terrainShader.programId;
-        mesh.material.albedo = glm::vec3(0.678f, 0.859f, 0.522f);
+        mesh.material.albedo = glm::vec3(0.478, 0.702, 0.384);
         mesh.material.roughness = 1.0f;
     }
 }

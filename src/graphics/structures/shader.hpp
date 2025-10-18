@@ -3,8 +3,8 @@
 #include "vec3.hpp"
 
 struct Shader {
-    const char* vertexShaderSource;
-    const char* fragmentShaderSource;
+    std::string vertexShaderPath;
+    std::string fragmentShaderPath;
 
     unsigned int vertexShaderId;
     unsigned int fragmentShaderId;
@@ -12,7 +12,7 @@ struct Shader {
 };
 
 struct ComputeShader {
-    const char* computeShaderSource;
+    std::string computeShaderPath;
 
     unsigned int computeShaderId;
     unsigned int programId;

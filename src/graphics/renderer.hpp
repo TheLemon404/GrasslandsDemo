@@ -57,6 +57,12 @@ public:
 
     static Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath);
     static ComputeShader CreateComputeShader(std::string computeShaderLocalPath);
+
+    void ReloadShaders();
+
+    void ReloadComputeShader(ComputeShader& computeShader);
+    void ReloadShader(Shader& computeShader);
+
     static void UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix);
     static void UploadShaderUniformVec4(unsigned int programId, std::string uniformName, glm::vec4 vector);
     static void UploadShaderUniformVec3(unsigned int programId, std::string uniformName, glm::vec3 vector);

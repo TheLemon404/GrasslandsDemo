@@ -33,6 +33,9 @@ void DebugLayer::DrawDebugGUI() {
         ImGui::Checkbox("Show Shadow-Map Debug", &application.renderer.showShadowMapDebug);
         ImGui::Checkbox("Draw Wireframe", &application.renderer.drawWireframe);
         ImGui::Checkbox("Draw Grass", &application.renderer.drawGrass);
+        if (ImGui::Button("Reload Shaders")) {
+            application.renderer.ReloadShaders();
+        }
     }
     if (ImGui::CollapsingHeader("Settings Debug")) {
         ImGui::InputInt("MSAA Samples", &application.settings.msaaSamples);

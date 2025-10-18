@@ -48,7 +48,10 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
         Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)application.clock.time);
         Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.478, 0.702, 0.384));
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.745, 0.941, 0.663));
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.765, 0.941, 0.659));
+
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor2", glm::vec3(0.706, 0.812, 0.569));
+        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor2", glm::vec3(0.82, 0.941, 0.659));
 
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
         Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);

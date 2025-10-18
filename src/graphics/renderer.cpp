@@ -220,8 +220,8 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
     application.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderLocalPath));
 
     return {
-        vertexParser.content.c_str(),
-        fragmentParser.content.c_str(),
+        vertexShaderLocalPath,
+        fragmentShaderLocalPath,
         vertexShaderId,
         fragmentShaderId,
         programId
@@ -265,10 +265,30 @@ ComputeShader Renderer::CreateComputeShader(std::string computeShaderLocalPath) 
     application.logger.Log("successfully compiled compute shader: " + std::string(computeShaderLocalPath));
 
     return {
-        computeParser.content.c_str(),
+        computeShaderLocalPath,
         computeShaderId,
         programId
     };
+}
+
+void Renderer::ReloadShaders() {
+    ReloadShader(opaqueLitShader);
+    ReloadShader(opaqueLitInstancedShader);
+    ReloadShader(postpassShader);
+    ReloadShader(fullscreenQuadShader);
+    ReloadShader(terrainShader);
+    ReloadShader(grassInstancedShader);
+}
+
+void Renderer::ReloadComputeShader(ComputeShader& computeShader) {
+    glDeleteProgram(computeShader.programId);
+    computeShader.programId = CreateComputeShader(computeShader.computeShaderPath).programId;
+}
+
+void Renderer::ReloadShader(Shader& shader) {
+    application.logger.Log(shader.vertexShaderPath);
+    glDeleteProgram(shader.programId);
+    shader.programId = CreateShader(shader.vertexShaderPath, shader.fragmentShaderPath).programId;
 }
 
 void Renderer::UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix) {
