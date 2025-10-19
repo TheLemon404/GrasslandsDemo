@@ -32,18 +32,16 @@ void main() {
 
     float depth = distance(cameraPosition, pPosition);
 
-    vec3 normal = normalize(cross(dFdx(pPosition), dFdy(pPosition)));
-
-    vec3 diffuse = max(dot(normal, normalize(-sunDirection)), 0.7f) * sunColor;
+    vec3 diffuse = max(dot(pNormal, normalize(-sunDirection)), 0.0f) * sunColor;
 
     vec3 viewDirection = normalize(cameraPosition - pPosition);
-    vec3 reflectDirection = reflect(normalize(sunDirection), normal);
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.7f), 32);
+    vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0f), 32);
     vec3 finalSpecular = (1.0 - material.roughness) * spec * sunColor;
 
-    float shadow = shadowCalculation(normal);
+    float shadow = shadowCalculation(pNormal);
 
-    vec3 lighting = (shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb;
+    vec3 lighting = max((shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular), vec3(0.6)) * color.rgb;
     vec4 final = vec4(lighting, 1.0f);
     fragColor = final;
     gl_FragDepth = gl_FragCoord.z;

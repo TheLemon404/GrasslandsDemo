@@ -46,7 +46,7 @@ void main() {
         shadow = shadowCalculation(pNormal);
     }
 
-    vec3 lighting = max((shadowColor + (1.0 - shadow)) * (diffuse + finalSpecular) * color.rgb, vec3(0.2));
+    vec3 lighting = (shadowColor + (1.0 - shadow)) * max((diffuse + finalSpecular), vec3(0.2)) * color.rgb;
     fragColor = vec4(lighting, 1.0f);
 
     gl_FragDepth = gl_FragCoord.z;

@@ -17,6 +17,8 @@ layout (location = 2) out vec2 pUV;
 layout (location = 3) out vec4 fragPosLightSpace;
 
 void main() {
+    vec2 texelSize = 1.0 / textureSize(heightMap, 0);
+
     float u = gl_TessCoord.x;
     float v = gl_TessCoord.y;
 
@@ -36,11 +38,6 @@ void main() {
     vec4 p10 = gl_in[2].gl_Position;
     vec4 p11 = gl_in[3].gl_Position;
 
-    // compute patch surface normal
-    vec4 uVec = p01 - p00;
-    vec4 vVec = p10 - p00;
-    vec4 normal = normalize( vec4(cross(vVec.xyz, uVec.xyz), 0) );
-
     // bilinearly interpolate position coordinate across patch
     vec4 p0 = (p01 - p00) * u + p00;
     vec4 p1 = (p11 - p10) * u + p10;
@@ -49,6 +46,14 @@ void main() {
     float height = texture(heightMap, uv).r * heightMapStrength;
     vec4 worldPosition = transformationData.transform * p;
     vec4 modifiedPosition = (worldPosition + vec4(0.0f, height, 0.0f, 0.0f));
+
+
+    // compute patch surface normal
+    float neightborHeight1 = texture(heightMap, uv + vec2(texelSize.x, 0)).r * heightMapStrength;
+    float neightborHeight2 = texture(heightMap, uv + vec2(0, texelSize.y)).r * heightMapStrength;
+    vec3 neighborVec1 = vec3(1, neightborHeight1, 0) - vec3(0, height, 0);
+    vec3 neighborVec2 = vec3(0, neightborHeight2, 1) - vec3(0, height, 0);
+    vec4 normal = normalize( vec4(cross(neighborVec2, neighborVec1), 0) );
 
     gl_Position = transformationData.projection * transformationData.view * modifiedPosition;
     pUV = uv;

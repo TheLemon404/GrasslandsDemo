@@ -8,7 +8,7 @@
 void FoliageSystem::Start(entt::registry &registry) {
     auto view = registry.view<InstancedMeshComponent, TerrainComponent, FoliageComponent>();
     for (auto& entity : view) {
-        TerrainComponent& terrain = registry.get<TerrainComponent>(entity);
+        TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
         instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
