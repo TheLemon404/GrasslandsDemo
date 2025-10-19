@@ -13,7 +13,7 @@ void FoliageSystem::Start(entt::registry &registry) {
         InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
         instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
         instancedMeshComponent.mesh.material.roughness = 1.0f;
-        instancedMeshComponent.mesh.material.shaderProgramId = application.renderer.grassInstancedShader.programId;
+        instancedMeshComponent.mesh.material.shader = std::make_shared<Shader>(application.renderer.grassInstancedShader);
         instancedMeshComponent.mesh.cullBackface = false;
         instancedMeshComponent.mesh.castsShadow = false;
 
@@ -29,7 +29,7 @@ void FoliageSystem::Start(entt::registry &registry) {
         int sq = sqrt(foliageComponent.numInstances);
 
         glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
-        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "dimensions", terrain.dimensions);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "dimensions", foliageComponent.dimensions);
         Renderer::UploadShaderUniformInt(foliageComponent.foliagePlacementComputeShader.programId, "sq", sq);
         glDispatchCompute(sq, sq, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -45,20 +45,20 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         InstancedMeshComponent instancedMeshComponent = application.scene.registry.get<InstancedMeshComponent>(entity);
         FoliageComponent foliageComponent = application.scene.registry.get<FoliageComponent>(entity);
 
-        Renderer::UploadShaderUniformVec2(mesh.material.shaderProgramId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "time", (float)application.clock.time);
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor", glm::vec3(0.478, 0.702, 0.384));
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor", glm::vec3(0.765, 0.941, 0.659));
+        Renderer::UploadShaderUniformVec2(mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
+        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)application.clock.time);
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor", glm::vec3(0.478, 0.702, 0.384));
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor", glm::vec3(0.765, 0.941, 0.659));
 
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "lowerColor2", glm::vec3(0.706, 0.812, 0.569));
-        Renderer::UploadShaderUniformVec3(mesh.material.shaderProgramId, "upperColor2", glm::vec3(0.82, 0.941, 0.659));
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor2", glm::vec3(0.706, 0.812, 0.569));
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor2", glm::vec3(0.82, 0.941, 0.659));
 
-        Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "perlinTexture", 3);
-        Renderer::UploadShaderUniformInt(mesh.material.shaderProgramId, "heightMap", 0);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "heightMapStrength", terrainComponent.maxHeight);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "breezeAmount", foliageComponent.breezeAmount);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "windAmount", foliageComponent.windAmount);
-        Renderer::UploadShaderUniformFloat(mesh.material.shaderProgramId, "windAngle", foliageComponent.windAngle);
+        Renderer::UploadShaderUniformInt(mesh.material.shader->programId, "perlinTexture", 3);
+        Renderer::UploadShaderUniformInt(mesh.material.shader->programId, "heightMap", 0);
+        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "heightMapStrength", terrainComponent.maxHeight);
+        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "breezeAmount", foliageComponent.breezeAmount);
+        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "windAmount", foliageComponent.windAmount);
+        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "windAngle", foliageComponent.windAngle);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);

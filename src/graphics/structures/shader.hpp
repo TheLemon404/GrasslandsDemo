@@ -4,9 +4,13 @@
 
 struct Shader {
     std::string vertexShaderPath;
+    std::string tesselationControlShaderPath;
+    std::string tesselationEvaluationShaderPath;
     std::string fragmentShaderPath;
 
     unsigned int vertexShaderId;
+    unsigned int tesselationControlShaderId;
+    unsigned int tesselationEvaluationShaderId;
     unsigned int fragmentShaderId;
     unsigned int programId;
 };

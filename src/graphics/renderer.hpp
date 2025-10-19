@@ -55,7 +55,7 @@ public:
 
     void RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin);
 
-    static Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath);
+    static Shader CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath, std::string tesselationControlShaderLocalPath = "", std::string tesselationEvaluationShaderLocalPath = "");
     static ComputeShader CreateComputeShader(std::string computeShaderLocalPath);
 
     void ReloadShaders();

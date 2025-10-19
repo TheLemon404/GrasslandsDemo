@@ -142,10 +142,10 @@ Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAsse
     for (Mesh& mesh : meshes) {
         CreateMeshBuffers(mesh);
         if (instanced) {
-            mesh.material.shaderProgramId = application.renderer.opaqueLitInstancedShader.programId;
+            mesh.material.shader = std::make_shared<Shader>(application.renderer.opaqueLitInstancedShader);
         }
         else {
-            mesh.material.shaderProgramId = application.renderer.opaqueLitShader.programId;
+            mesh.material.shader = std::make_shared<Shader>(application.renderer.opaqueLitShader);
         }
     }
 
@@ -165,11 +165,11 @@ void Renderer::RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin)
     camera.position = finalTransformation * originalPoint;
 }
 
-Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath) {
+Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fragmentShaderLocalPath, std::string tesselationControlShaderLocalPath, std::string tesselationEvaluationShaderLocalPath) {
     SE::Util::Parser vertexParser(vertexShaderLocalPath.c_str());
     SE::Util::Parser fragmentParser(fragmentShaderLocalPath.c_str());
 
-    unsigned int vertexShaderId = 0, fragmentShaderId = 0, programId = 0;
+    unsigned int vertexShaderId = 0, tesselationControlShaderId = 0, tesselationEvaluationShaderId = 0, fragmentShaderId = 0, programId = 0;
 
     //vertex shader compilation
     vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
@@ -185,6 +185,8 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
         application.logger.ThrowRuntimeError("Vertex Shader error at: " + vertexShaderLocalPath + " : " + vertexInfoLog);
     }
 
+    application.logger.Log("successfully compiled vertex shader: " + vertexShaderLocalPath);
+
     //fragment shader compilationg
     fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
     const char* fragmentCodeTemp = fragmentParser.content.c_str();
@@ -199,7 +201,51 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
         application.logger.ThrowRuntimeError("Fragment Shader error at: " + fragmentShaderLocalPath + " : " + fragmentInfoLog);
     }
 
+    application.logger.Log("successfully compiled fragment shader: " + fragmentShaderLocalPath);
+
     programId = glCreateProgram();
+
+    //optional tesselation shader compilation
+    if (!tesselationControlShaderLocalPath.empty() && !tesselationEvaluationShaderLocalPath.empty()) {
+        SE::Util::Parser tesselationControlParser(tesselationControlShaderLocalPath.c_str());
+
+        //tesselation control shader
+        tesselationControlShaderId = glCreateShader(GL_TESS_CONTROL_SHADER);
+        const char* tescCodeTemp = tesselationControlParser.content.c_str();
+        glShaderSource(tesselationControlShaderId, 1, &tescCodeTemp, nullptr);
+        glCompileShader(tesselationControlShaderId);
+        int tescSuccess;
+        char tescInfoLog[512];
+        glGetShaderiv(tesselationControlShaderId, GL_COMPILE_STATUS, &tescSuccess);
+
+        if(!tescSuccess) {
+            glGetShaderInfoLog(tesselationControlShaderId, 512, nullptr, tescInfoLog);
+            application.logger.ThrowRuntimeError("Tesselation Control Shader error at: " + tesselationControlShaderLocalPath + " : " + tescInfoLog);
+        }
+
+        application.logger.Log("successfully compiled tesselation control shader: " + tesselationControlShaderLocalPath);
+
+        //tesselation evaluation shader
+        SE::Util::Parser tesselationEvaluationParser(tesselationEvaluationShaderLocalPath.c_str());
+
+        tesselationEvaluationShaderId = glCreateShader(GL_TESS_EVALUATION_SHADER);
+        const char* teseCodeTemp = tesselationEvaluationParser.content.c_str();
+        glShaderSource(tesselationEvaluationShaderId, 1, &teseCodeTemp, nullptr);
+        glCompileShader(tesselationEvaluationShaderId);
+        int teseSuccess;
+        char teseInfoLog[512];
+        glGetShaderiv(tesselationEvaluationShaderId, GL_COMPILE_STATUS, &teseSuccess);
+
+        if(!teseSuccess) {
+            glGetShaderInfoLog(tesselationEvaluationShaderId, 512, nullptr, teseInfoLog);
+            application.logger.ThrowRuntimeError("Tesselation Evaluation Shader error at: " + tesselationEvaluationShaderLocalPath + " : " + teseInfoLog);
+        }
+
+        application.logger.Log("successfully compiled tesselation evaluation shader: " + tesselationEvaluationShaderLocalPath);
+
+        glAttachShader(programId, tesselationControlShaderId);
+        glAttachShader(programId, tesselationEvaluationShaderId);
+    }
 
     glAttachShader(programId, vertexShaderId);
     glAttachShader(programId, fragmentShaderId);
@@ -207,6 +253,8 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
 
     glDeleteShader(vertexShaderId);
     glDeleteShader(fragmentShaderId);
+    glDeleteShader(tesselationControlShaderId);
+    glDeleteShader(tesselationEvaluationShaderId);
 
     int programSuccess;
     char programInfoLog[512];
@@ -216,13 +264,14 @@ Shader Renderer::CreateShader(std::string vertexShaderLocalPath, std::string fra
         application.logger.ThrowRuntimeError(programInfoLog);
     }
 
-    application.logger.Log("successfully compiled vertex shader: " + std::string(vertexShaderLocalPath));
-    application.logger.Log("successfully compiled fragment shader: " + std::string(fragmentShaderLocalPath));
-
     return {
         vertexShaderLocalPath,
+        tesselationControlShaderLocalPath,
+        tesselationEvaluationShaderLocalPath,
         fragmentShaderLocalPath,
         vertexShaderId,
+        tesselationControlShaderId,
+        tesselationEvaluationShaderId,
         fragmentShaderId,
         programId
     };
@@ -286,9 +335,13 @@ void Renderer::ReloadComputeShader(ComputeShader& computeShader) {
 }
 
 void Renderer::ReloadShader(Shader& shader) {
-    application.logger.Log(shader.vertexShaderPath);
     glDeleteProgram(shader.programId);
-    shader.programId = CreateShader(shader.vertexShaderPath, shader.fragmentShaderPath).programId;
+    shader.programId = CreateShader(
+        shader.vertexShaderPath,
+        shader.fragmentShaderPath,
+        shader.tesselationControlShaderPath.empty() ? "" : shader.tesselationControlShaderPath,
+        shader.tesselationEvaluationShaderPath.empty() ? "" : shader.tesselationEvaluationShaderPath
+        ).programId;
 }
 
 void Renderer::UploadShaderUniformMat4(unsigned int programId, std::string uniformName, glm::mat4 matrix) {
@@ -448,25 +501,25 @@ void Renderer::UpdateTransform(Transform& transform) {
 }
 
 void Renderer::UploadMaterialUniforms(Mesh &mesh) {
-    UploadShaderUniformVec3(mesh.material.shaderProgramId, "material.albedo", mesh.material.albedo);
-    UploadShaderUniformFloat(mesh.material.shaderProgramId, "material.roughness", mesh.material.roughness);
+    UploadShaderUniformVec3(mesh.material.shader->programId, "material.albedo", mesh.material.albedo);
+    UploadShaderUniformFloat(mesh.material.shader->programId, "material.roughness", mesh.material.roughness);
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "material.hasBaseTexture", 0);
+        UploadShaderUniformInt(mesh.material.shader->programId, "material.hasBaseTexture", 0);
     }
     else {
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "material.baseTexture", 2);
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "material.hasBaseTexture", 1);
+        UploadShaderUniformInt(mesh.material.shader->programId, "material.baseTexture", 2);
+        UploadShaderUniformInt(mesh.material.shader->programId, "material.hasBaseTexture", 1);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, mesh.material.texture.id);
     }
 }
 
 void Renderer::UploadTransformationDataUniforms(Mesh &mesh, glm::mat4 transform, glm::mat4 view, glm::mat4 projection, glm::mat4 lightView, glm::mat4 lightProjection) {
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.transform", transform);
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.view", view);
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.projection", projection);
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.lightView", lightView);
-    UploadShaderUniformMat4(mesh.material.shaderProgramId, "transformationData.lightProjection", lightProjection);
+    UploadShaderUniformMat4(mesh.material.shader->programId, "transformationData.transform", transform);
+    UploadShaderUniformMat4(mesh.material.shader->programId, "transformationData.view", view);
+    UploadShaderUniformMat4(mesh.material.shader->programId, "transformationData.projection", projection);
+    UploadShaderUniformMat4(mesh.material.shader->programId, "transformationData.lightView", lightView);
+    UploadShaderUniformMat4(mesh.material.shader->programId, "transformationData.lightProjection", lightProjection);
 }
 
 void Renderer::Initialize() {
@@ -474,7 +527,7 @@ void Renderer::Initialize() {
     opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
     postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
     fullscreenQuadShader = CreateShader("resources/shaders/fullscreen_quad.vert", "resources/shaders/fullscreen_quad.frag");
-    terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag");
+    terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag", "resources/shaders/terrain.tesc", "resources/shaders/terrain.tese");
     grassInstancedShader = CreateShader("resources/shaders/grass_instanced.vert", "resources/shaders/grass_instanced.frag");
 
     shadowFramebuffer = CreateShadowFramebuffer(application.settings.shadowFramebufferResolution, application.settings.shadowFramebufferResolution);
@@ -490,10 +543,12 @@ void Renderer::Initialize() {
     glDepthFunc(GL_LESS);
     glEnable(GL_MULTISAMPLE);
 
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
+
     //create default objects (fullscreen quad etc...)
     CreateMeshBuffers(fullscreenQuad);
     fullscreenQuad.material.texture.id = shadowFramebuffer.depthTexture.id;
-    fullscreenQuad.material.shaderProgramId = application.renderer.fullscreenQuadShader.programId;
+    fullscreenQuad.material.shader = std::make_shared<Shader>(application.renderer.fullscreenQuadShader);
 }
 
 void Renderer::DrawActiveScene() {
@@ -544,17 +599,27 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
             glEnableVertexAttribArray(2);
-            glUseProgram(mesh.material.shaderProgramId);
+            glUseProgram(mesh.material.shader->programId);
 
             UploadTransformationDataUniforms(mesh, transformComponent.transform.matrix, lightView, lightProjection);
 
             application.scene.InsertShadowDrawLogic(mesh, entity);
 
-            if (!mesh.indices.empty()) {
-                glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            if (!mesh.material.shader->tesselationControlShaderPath.empty() && !mesh.material.shader->tesselationEvaluationShaderPath.empty()) {
+                if (!mesh.indices.empty()) {
+                    glDrawElements(GL_PATCHES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+                }
+                else {
+                    glDrawArrays(GL_PATCHES, 0, mesh.vertices.size() / 3);
+                }
             }
             else {
-                glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size() / 3);
+                if (!mesh.indices.empty()) {
+                    glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+                }
+                else {
+                    glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size() / 3);
+                }
             }
 
             glUseProgram(0);
@@ -586,7 +651,7 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
             glEnableVertexAttribArray(2);
-            glUseProgram(mesh.material.shaderProgramId);
+            glUseProgram(mesh.material.shader->programId);
 
             UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), lightView, lightProjection);
 
@@ -637,26 +702,41 @@ void Renderer::DrawActiveScene() {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
-        glUseProgram(mesh.material.shaderProgramId);
+        glUseProgram(mesh.material.shader->programId);
 
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
-        UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
+        UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
+        UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
 
         UploadTransformationDataUniforms(mesh, transformComponent.transform.matrix, camera.view, camera.projection, lightView, lightProjection);
         UploadMaterialUniforms(mesh);
 
         //upload environment data
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", application.scene.environment.sunDirection);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", application.scene.environment.sunColor);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", application.scene.environment.shadowColor);
-        UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
-        UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", application.settings.blurDistance);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", application.scene.environment.sunDirection);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", application.scene.environment.sunColor);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", application.scene.environment.shadowColor);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
+        UploadShaderUniformFloat(mesh.material.shader->programId, "blurDistance", application.settings.blurDistance);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
         application.scene.InsertDrawLogic(mesh, entity);
 
-        glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+        if (!mesh.material.shader->tesselationControlShaderPath.empty() && !mesh.material.shader->tesselationEvaluationShaderPath.empty()) {
+            if (!mesh.indices.empty()) {
+                glDrawElements(GL_PATCHES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            }
+            else {
+                glDrawArrays(GL_PATCHES, 0, mesh.vertices.size() / 3);
+            }
+        }
+        else {
+            if (!mesh.indices.empty()) {
+                glDrawElements(GL_TRIANGLES, mesh.indices.size(), GL_UNSIGNED_INT, 0);
+            }
+            else {
+                glDrawArrays(GL_TRIANGLES, 0, mesh.vertices.size() / 3);
+            }
+        }
 
         glUseProgram(0);
         glDisableVertexAttribArray(0);
@@ -674,7 +754,7 @@ void Renderer::DrawActiveScene() {
         InstancedMeshComponent& instancedMeshComponent = view2.get<InstancedMeshComponent>(entity);
         Mesh mesh = instancedMeshComponent.mesh;
 
-        if ((drawGrass && instancedMeshComponent.mesh.material.shaderProgramId == grassInstancedShader.programId) || instancedMeshComponent.mesh.material.shaderProgramId != grassInstancedShader.programId) {
+        if ((drawGrass && instancedMeshComponent.mesh.material.shader->programId == grassInstancedShader.programId) || instancedMeshComponent.mesh.material.shader->programId != grassInstancedShader.programId) {
             if (!mesh.cullBackface) {
                 glDisable(GL_CULL_FACE);
             }
@@ -687,21 +767,20 @@ void Renderer::DrawActiveScene() {
             glEnableVertexAttribArray(0);
             glEnableVertexAttribArray(1);
             glEnableVertexAttribArray(2);
-            glUseProgram(mesh.material.shaderProgramId);
+            glUseProgram(mesh.material.shader->programId);
 
-            UploadShaderUniformInt(mesh.material.shaderProgramId, "receivesShadow", mesh.receivesShadow);
-            UploadShaderUniformInt(mesh.material.shaderProgramId, "shadowMap", 1);
+            UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
+            UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
 
             UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), camera.view, camera.projection, lightView, lightProjection);
             UploadMaterialUniforms(mesh);
 
-
             //upload environment data
-            UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunDirection", application.scene.environment.sunDirection);
-            UploadShaderUniformVec3(mesh.material.shaderProgramId, "sunColor", application.scene.environment.sunColor);
-            UploadShaderUniformVec3(mesh.material.shaderProgramId, "shadowColor", application.scene.environment.shadowColor);
-            UploadShaderUniformVec3(mesh.material.shaderProgramId, "cameraPosition", camera.position);
-            UploadShaderUniformFloat(mesh.material.shaderProgramId, "blurDistance", application.settings.blurDistance);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", application.scene.environment.sunDirection);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", application.scene.environment.sunColor);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", application.scene.environment.shadowColor);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
+            UploadShaderUniformFloat(mesh.material.shader->programId, "blurDistance", application.settings.blurDistance);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
@@ -733,15 +812,15 @@ void Renderer::DrawActiveScene() {
         glBindVertexArray(fullscreenQuad.vao);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(2);
-        glUseProgram(fullscreenQuad.material.shaderProgramId);
+        glUseProgram(fullscreenQuad.material.shader->programId);
 
         if (fullscreenQuad.material.texture.id != 0) {
-            UploadShaderUniformInt(fullscreenQuad.material.shaderProgramId, "hasBaseTexture", 1);
+            UploadShaderUniformInt(fullscreenQuad.material.shader->programId, "hasBaseTexture", 1);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
         }
         else {
-            UploadShaderUniformInt(fullscreenQuad.material.shaderProgramId, "hasBaseTexture", 0);
+            UploadShaderUniformInt(fullscreenQuad.material.shader->programId, "hasBaseTexture", 0);
         }
 
         glDrawElements(GL_TRIANGLES, fullscreenQuad.indices.size(), GL_UNSIGNED_INT, 0);
