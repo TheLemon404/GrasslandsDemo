@@ -1,0 +1,26 @@
+[
+  {
+    "label": "CMake Configure",
+    "command": "C:/Users/micha/AppData/Local/Programs/CLion/bin/cmake/win/x64/bin/cmake.exe",
+    "args": [
+      "-DCMAKE_BUILD_TYPE=Debug",
+      "-DCMAKE_MAKE_PROGRAM=C:/Users/micha/AppData/Local/Programs/CLion/bin/ninja/win/x64/ninja.exe",
+      "-G",
+      "Ninja",
+      "-B",
+      "cmake-build-debug"
+    ],
+    "use_new_terminal": false
+  },
+  {
+    "label": "CMake Build",
+    "command": "C:/Users/micha/AppData/Local/Programs/CLion/bin/cmake/win/x64/bin/cmake.exe",
+    "args": ["--build", "cmake-build-debug", "--target", "GrasslandsDemo"],
+    "use_new_terminal": false
+  },
+  {
+    "label": "Run GrasslandsDemo",
+    "command": "./cmake-build-debug/GrasslandsDemo.exe",
+    "use_new_terminal": true
+  }
+]
