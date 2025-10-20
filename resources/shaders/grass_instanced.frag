@@ -2,11 +2,11 @@
 
 #include <material_data.glsl>
 
-layout (location = 0) in vec3 pPosition;
-layout (location = 1) in vec3 pNormal;
-layout (location = 2) in vec2 pUV;
-layout (location = 3) in vec4 fragPosLightSpace;
-layout (location = 4) in vec2 terrainSpaceUV;
+layout(location = 0) in vec3 pPosition;
+layout(location = 1) in vec3 pNormal;
+layout(location = 2) in vec2 pUV;
+layout(location = 3) in vec4 fragPosLightSpace;
+layout(location = 4) in vec2 terrainSpaceUV;
 
 uniform vec3 lowerColor;
 uniform vec3 upperColor;
@@ -24,7 +24,7 @@ uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;
 
-layout (location = 0) out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 #include <lighting_calculations.glsl>
 
@@ -32,17 +32,17 @@ void main() {
     vec4 color = vec4(1.0);
     vec4 color2 = vec4(1.0);
 
-    if(material.hasBaseTexture == 1){
+    if (material.hasBaseTexture == 1) {
         color = texture(material.baseTexture, pUV);
     }
-    else{
+    else {
         color = vec4(mix(lowerColor, upperColor, pUV.y), 1.0);
     }
 
-    if(material.hasBaseTexture == 1){
+    if (material.hasBaseTexture == 1) {
         color2 = texture(material.baseTexture, pUV);
     }
-    else{
+    else {
         color2 = vec4(mix(lowerColor2, upperColor2, pUV.y), 1.0);
     }
 
@@ -56,7 +56,7 @@ void main() {
     vec3 finalSpecular = (1.0 - material.roughness) * spec * sunColor;
 
     float shadow = 0.0f;
-    if(receivesShadow != 0) {
+    if (receivesShadow != 0) {
         shadow = shadowCalculation(pNormal);
     }
 
@@ -65,7 +65,7 @@ void main() {
 
     vec3 lighting = (shadowColor + (1.0 - shadow)) * max((diffuse + finalSpecular), vec3(0.8)) * factoredColor;
     vec4 final = vec4(lighting, 1.0f);
-    if(material.hasBaseTexture == 1){
+    if (material.hasBaseTexture == 1) {
         fragColor = final * color.a;
     }
     else {
