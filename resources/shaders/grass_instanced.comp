@@ -2,26 +2,50 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
+struct DrawElementsIndirectCommand {
+    uint count;          // Number of indices for this LOD mesh
+    uint instanceCount;  // Filled dynamically via atomicAdd
+    uint firstIndex;
+    uint baseVertex;
+    uint baseInstance;
+};
+
 layout (binding = 2, std430) buffer transformsSSBO {
     mat4 transformMatrices[];
 };
 
-uniform ivec2 dimensions;
-uniform int sq;
+layout (binding = 3, std430) buffer drawCommandSSBO {
+    DrawElementsIndirectCommand drawCommands[];
+};
+
+uniform vec3 cameraPosition;
+
+uniform ivec2 terrainDimensions;
+uniform ivec2 patchDimensions;
 
 #include <shader_utils.glsl>
 #include <matrix_math.glsl>
 
 void main() {
-    float x = gl_WorkGroupID.x - sq / 2.0 + random(vec2(gl_WorkGroupID.x, gl_WorkGroupID.y));
-    float z = gl_WorkGroupID.y - sq / 2.0 + random(vec2(gl_WorkGroupID.x, gl_WorkGroupID.y));
+    float x = gl_WorkGroupID.x;
+    float z = gl_WorkGroupID.y;
 
-    vec3 scaleVector = vec3(1);
-    float rotate = random(vec2(x, z));
-    vec3 position = vec3(x * dimensions.x / sq, 0.0, z * dimensions.y / sq);
+    vec3 patchBasePosition = vec3(x, 1, z) * vec3(patchDimensions.x, 0, patchDimensions.y);
 
-    mat4 transform = translate(position) * rotateY(rotate) * scale(scaleVector);
+    const int numBladesPerAxis = 200;
+    uint startIndex = atomicAdd(drawCommands[0].instanceCount, numBladesPerAxis * numBladesPerAxis);
 
-    uint index = gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x;
-    transformMatrices[index] = transform;
+    for(int i = 0; i < numBladesPerAxis; i++){
+        for(int j = 0; j < numBladesPerAxis; j++)
+        {
+            vec3 scaleVector = vec3(1);
+            float rotate = random(vec2(x, z));
+            vec3 position = patchBasePosition + (vec3(i / float(numBladesPerAxis), 0, j / float(numBladesPerAxis))) * vec3(patchDimensions.x, 0, patchDimensions.y);
+
+            position -= vec3(terrainDimensions.x, 0, terrainDimensions.y) / 2.0;
+            mat4 transform = translate(position) * rotateY(rotate) * scale(scaleVector);
+
+            transformMatrices[startIndex + (j * numBladesPerAxis) + i] = transform;
+        }
+    }
 }

@@ -35,12 +35,10 @@ struct GraphicsDemoScene : Scene {
         transformComponent.transform.position.y = 5.0f;
 
         entt::entity terrain = registry.create();
-        //for the terrain mesh
+        //for the terrain mesh and grass foliage
         registry.emplace<TransformComponent>(terrain);
         registry.emplace<MeshComponent>(terrain);
         registry.emplace<TerrainComponent>(terrain);
-        //for the grass foliage
-        registry.emplace<InstancedMeshComponent>(terrain);
         registry.emplace<FoliageComponent>(terrain);
 
         //add all the needed systems to our scene
