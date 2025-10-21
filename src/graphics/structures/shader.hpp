@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vec3.hpp"
+#include <iostream>
 
 struct Shader {
     std::string vertexShaderPath;
