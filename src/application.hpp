@@ -1,4 +1,6 @@
 #pragma once
+#include <cstddef>
+#include <memory>
 #define GLFW_INCLUDE_NONE
 #include "quil.h"
 #include "core/clock.hpp"
@@ -17,6 +19,13 @@ struct Application {
     Clock clock;
     Scene scene;
     Settings settings;
+
+    inline static std::shared_ptr<Application> instance;
+    static std::shared_ptr<Application> Get() {
+        if(instance == nullptr) instance = std::make_shared<Application>();
+
+        return instance;
+    }
 
     Application() {
         window = Window();
@@ -58,5 +67,3 @@ struct Application {
         window.Close();
     }
 };
-
-extern Application application;

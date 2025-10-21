@@ -1,5 +1,6 @@
 #include "debug_layer.hpp"
 #include <imgui.h>
+#include <memory>
 
 #include "../application.hpp"
 #include "backends/imgui_impl_glfw.h"
@@ -23,6 +24,7 @@ void DebugLayer::Initialize(GLFWwindow* window) {
 }
 
 void DebugLayer::DrawDebugGUI() {
+    std::shared_ptr<Application> app = Application::Get();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -30,28 +32,28 @@ void DebugLayer::DrawDebugGUI() {
     //master debug window
     ImGui::Begin("Debug");
     if (ImGui::CollapsingHeader("Renderer Debug")) {
-        ImGui::Checkbox("Show Shadow-Map Debug", &application.renderer.showShadowMapDebug);
-        ImGui::Checkbox("Draw Wireframe", &application.renderer.drawWireframe);
-        ImGui::Checkbox("Draw Grass", &application.renderer.drawGrass);
+        ImGui::Checkbox("Show Shadow-Map Debug", &app->renderer.showShadowMapDebug);
+        ImGui::Checkbox("Draw Wireframe", &app->renderer.drawWireframe);
+        ImGui::Checkbox("Draw Grass", &app->renderer.drawGrass);
         if (ImGui::Button("Reload Shaders")) {
-            application.renderer.ReloadShaders();
+            app->renderer.ReloadShaders();
         }
     }
     if (ImGui::CollapsingHeader("Settings Debug")) {
-        ImGui::InputInt("MSAA Samples", &application.settings.msaaSamples);
+        ImGui::InputInt("MSAA Samples", &app->settings.msaaSamples);
     }
     int shouldReloadApplication = false;
     if (ImGui::Button("Reload Application")) {
         shouldReloadApplication = true;
     }
-    ImGui::Text("Delta Time: %lf", application.clock.deltaTime);
-    ImGui::Text("FPS: %lf", 1.0 / application.clock.deltaTime);
+    ImGui::Text("Delta Time: %lf", app->clock.deltaTime);
+    ImGui::Text("FPS: %lf", 1.0 / app->clock.deltaTime);
     ImGui::End();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    if (shouldReloadApplication) application.Reload();
+    if (shouldReloadApplication) app->Reload();
 }
 
 void DebugLayer::Shutdown() {

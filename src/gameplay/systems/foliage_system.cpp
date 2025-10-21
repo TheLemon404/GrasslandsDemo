@@ -12,7 +12,7 @@ void FoliageSystem::Start(entt::registry &registry) {
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         foliageComponent.meshLOD0 = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
         foliageComponent.meshLOD0.material.roughness = 1.0f;
-        foliageComponent.meshLOD0.material.shader = std::make_shared<Shader>(application.renderer.grassInstancedShader);
+        foliageComponent.meshLOD0.material.shader = std::make_shared<Shader>(Application::Get()->renderer.grassInstancedShader);
         foliageComponent.meshLOD0.cullBackface = false;
         foliageComponent.meshLOD0.castsShadow = false;
 
@@ -44,12 +44,12 @@ void FoliageSystem::Start(entt::registry &registry) {
 }
 
 void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
-    if (application.scene.registry.try_get<TerrainComponent>(entity) && application.scene.registry.try_get<FoliageComponent>(entity)) {
-        TerrainComponent terrainComponent = application.scene.registry.get<TerrainComponent>(entity);
-        FoliageComponent foliageComponent = application.scene.registry.get<FoliageComponent>(entity);
+    if (Application::Get()->scene.registry.try_get<TerrainComponent>(entity) && Application::Get()->scene.registry.try_get<FoliageComponent>(entity)) {
+        TerrainComponent terrainComponent = Application::Get()->scene.registry.get<TerrainComponent>(entity);
+        FoliageComponent foliageComponent = Application::Get()->scene.registry.get<FoliageComponent>(entity);
 
         Renderer::UploadShaderUniformVec2(mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
-        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)application.clock.time);
+        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
         Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor", glm::vec3(0.478, 0.702, 0.384));
         Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor", glm::vec3(0.765, 0.941, 0.659));
 
@@ -70,4 +70,3 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         glBindTexture(GL_TEXTURE_2D, terrainComponent.perlinNoiseTexture.id);
     }
 }
-

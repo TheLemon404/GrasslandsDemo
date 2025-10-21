@@ -49,7 +49,7 @@ void TerrainSystem::Start(entt::registry& registry) {
         const unsigned int maxIndex = (unsigned int)(mesh.vertices.size());
         for (size_t k = 0; k < mesh.indices.size(); ++k) {
             if (mesh.indices[k] >= maxIndex) {
-                application.logger.ThrowRuntimeError("Terrain::Generate: index out of range at index " + std::to_string(k) +
+                Application::Get()->logger.ThrowRuntimeError("Terrain::Generate: index out of range at index " + std::to_string(k) +
                                                 " value: " + std::to_string(mesh.indices[k]) +
                                                 " max allowed: " + std::to_string(maxIndex - 1));
             }
@@ -59,19 +59,19 @@ void TerrainSystem::Start(entt::registry& registry) {
         terrain.perlinNoiseTexture = Texture::LoadTextureFromFile("resources/textures/perlinLarge.png", 3);
 
         Renderer::CreateMeshBuffers(mesh);
-        mesh.material.shader = std::make_shared<Shader>(application.renderer.terrainShader);
+        mesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.terrainShader);
         mesh.material.albedo = glm::vec3(0.82, 0.941, 0.659);
         mesh.material.roughness = 1.0f;
     }
 }
 
 void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
-    if (application.scene.registry.try_get<TerrainComponent>(entity)) {
-        TerrainComponent terrainComponent = application.scene.registry.get<TerrainComponent>(entity);
+    if (Application::Get()->scene.registry.try_get<TerrainComponent>(entity)) {
+        TerrainComponent terrainComponent = Application::Get()->scene.registry.get<TerrainComponent>(entity);
 
         Renderer::UploadShaderUniformInt(mesh.material.shader->programId, "heightMap", 0);
         Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "heightMapStrength", terrainComponent.maxHeight);
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", application.renderer.camera.position);
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", Application::Get()->renderer.camera.position);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
     }
