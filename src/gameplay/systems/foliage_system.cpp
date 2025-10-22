@@ -49,7 +49,6 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         FoliageComponent foliageComponent = Application::Get()->scene.registry.get<FoliageComponent>(entity);
 
         Renderer::UploadShaderUniformVec2(mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
-        Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
         Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor", glm::vec3(0.478, 0.702, 0.384));
         Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor", glm::vec3(0.765, 0.941, 0.659));
 

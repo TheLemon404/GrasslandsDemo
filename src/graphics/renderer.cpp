@@ -837,6 +837,7 @@ void Renderer::DrawActiveScene() {
             UploadMaterialUniforms(mesh);
 
             //upload environment data
+            UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.sunColor);
             UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
