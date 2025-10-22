@@ -6,6 +6,7 @@
 #include "components/foliage_component.hpp"
 #include "components/instanced_mesh_component.hpp"
 #include "components/mesh_component.hpp"
+#include "systems/camera_system.hpp"
 #include "systems/foliage_system.hpp"
 #include "systems/system.hpp"
 #include "systems/terrain_system.hpp"
@@ -44,5 +45,6 @@ struct GraphicsDemoScene : Scene {
         //add all the needed systems to our scene
         systems.push_back(std::make_unique<TerrainSystem>());
         systems.push_back(std::make_unique<FoliageSystem>());
+        systems.push_back(std::make_unique<CameraSystem>());
     }
 };
