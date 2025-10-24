@@ -3,10 +3,13 @@
 #include "../../graphics/renderer.hpp"
 #include "../components/foliage_component.hpp"
 #include "../components/instanced_mesh_component.hpp"
+#include "entt/entity/fwd.hpp"
 #include "glad/glad.h"
+#include <gl/gl.h>
+#include <memory>
 
 void FoliageSystem::Start(entt::registry &registry) {
-    auto view = registry.view<FoliageComponent, InstancedMeshComponent>();
+    auto view = registry.view<FoliageComponent, TerrainComponent, InstancedMeshComponent>();
     for (auto& entity : view) {
         TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
@@ -28,13 +31,35 @@ void FoliageSystem::Start(entt::registry &registry) {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, foliageComponent.instancedSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+        instancedMeshComponent.transforms.resize(totalNumInstances);
+    }
+}
+
+void FoliageSystem::Update(entt::registry& registry) {
+    if(computeFrameCounter < 2) {
+        computeFrameCounter++;
+        return;
+    }
+
+    computeFrameCounter = 0;
+
+    auto view = registry.view<FoliageComponent, TerrainComponent>();
+    std::shared_ptr<Application> app = Application::Get();
+
+    for (auto& entity : view) {
+        FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
+        TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instancedSSBO);
+        glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, nullptr);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
         glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "terrainDimensions", terrainComponent.dimensions);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.numInstancesPerAxis);
+        Renderer::UploadShaderUniformVec3(foliageComponent.foliagePlacementComputeShader.programId, "cameraPosition", app->renderer.camera.position);
         glDispatchCompute(foliageComponent.numInstancesPerAxis.x, foliageComponent.numInstancesPerAxis.y, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        instancedMeshComponent.transforms.resize(totalNumInstances);
     }
 }
 

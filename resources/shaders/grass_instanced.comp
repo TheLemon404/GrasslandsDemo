@@ -31,6 +31,8 @@ void main() {
         );
     position -= vec3(terrainDimensions.x / float(2.0), 0, terrainDimensions.y / float(2.0));
 
+    if(distance(cameraPosition, position) > 100) return;
+
     mat4 transform = translate(position) * rotateY(rotate) * scale(scaleVector);
 
     transformMatrices[(x * numInstancesPerAxis.y) + z] = transform;
