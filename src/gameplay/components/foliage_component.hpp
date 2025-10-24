@@ -1,16 +1,11 @@
 #pragma once
 
-struct DrawElementsIndirectCommand {
-    unsigned int count;          // number of indices per instance
-    unsigned int instanceCount;  // number of instances to draw
-    unsigned int firstIndex;     // offset in index buffer
-    unsigned int baseVertex;     // base vertex in vertex buffer
-    unsigned int baseInstance;   // starting instance ID
-};
+#include "../../graphics/structures/shader.hpp"
+#include "../../graphics/structures/mesh.hpp"
 
 struct FoliageComponent {
     //must be a perfect square
-    glm::ivec2 numPatches = glm::ivec2(3);
+    glm::ivec2 numInstancesPerAxis = glm::ivec2(100, 100);
     float cameraCutoffDistance = 200.0f;
     float breezeAmount = 0.25f;
     float windAmount = 25.0f;
@@ -19,6 +14,4 @@ struct FoliageComponent {
     ComputeShader foliagePlacementComputeShader;
 
     unsigned int instancedSSBO;
-    unsigned int indirectDrawCommandSSBO;
-    Mesh meshLOD0;
 };

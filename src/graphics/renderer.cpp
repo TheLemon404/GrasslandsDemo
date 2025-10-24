@@ -780,6 +780,7 @@ void Renderer::DrawActiveScene() {
             UploadMaterialUniforms(mesh);
 
             //upload environment data
+            UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)app->clock.time);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.sunColor);
             UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
@@ -795,65 +796,6 @@ void Renderer::DrawActiveScene() {
             }
             else {
                 glDrawArraysInstanced(GL_TRIANGLES, 0, mesh.vertices.size() / 3, instancedMeshComponent.transforms.size());
-            }
-
-            glUseProgram(0);
-            glDisableVertexAttribArray(0);
-            glDisableVertexAttribArray(1);
-            glDisableVertexAttribArray(2);
-            glBindVertexArray(0);
-
-            if (!mesh.cullBackface) {
-                glEnable(GL_CULL_FACE);
-            }
-        }
-    }
-
-    //custom draw logic for foliage (foliage CANNOT cast shadows)
-    auto view3 = app->scene.registry.view<FoliageComponent>();
-    for (auto entity : view3) {
-        FoliageComponent& foliageComponent = view3.get<FoliageComponent>(entity);
-        Mesh mesh = foliageComponent.meshLOD0;
-
-        if ((drawGrass && mesh.material.shader->programId == grassInstancedShader.programId) || mesh.material.shader->programId != grassInstancedShader.programId) {
-            if (!mesh.cullBackface) {
-                glDisable(GL_CULL_FACE);
-            }
-
-            if (mesh.vao == 0) {
-                app->logger.ThrowRuntimeError("MAJOR ERROR: attempting to draw a mesh that has no VAO (you probably forgot to call Renderer::CreateMeshBuffers() somwhere");
-            }
-
-            glBindVertexArray(mesh.vao);
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-            glEnableVertexAttribArray(2);
-            glUseProgram(mesh.material.shader->programId);
-
-            UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
-            UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
-
-            UploadTransformationDataUniforms(mesh, glm::identity<glm::mat4>(), camera.view, camera.projection, lightView, lightProjection);
-            UploadMaterialUniforms(mesh);
-
-            //upload environment data
-            UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.sunColor);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
-            UploadShaderUniformFloat(mesh.material.shader->programId, "blurDistance", app->settings.blurDistance);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
-
-            app->scene.InsertInstancedDrawLogic(mesh, entity);
-
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, foliageComponent.indirectDrawCommandSSBO);
-            if (!mesh.indices.empty()) {
-                glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, nullptr);
-            }
-            else {
-                glDrawArraysIndirect(GL_TRIANGLES, nullptr);
             }
 
             glUseProgram(0);

@@ -20,7 +20,9 @@ void TerrainSystem::Start(entt::registry& registry) {
             for (int j = 0; j < terrain.resolution.y; ++j) {
                 float x = static_cast<float>(i) - terrain.resolution.x / 2;
                 float z = static_cast<float>(j) - terrain.resolution.y / 2;
-                mesh.vertices.push_back({x * ((float)terrain.dimensions.x / terrain.resolution.x), 0.0f, z * ((float)terrain.dimensions.y / terrain.resolution.y)});
+
+                glm::vec3 position = glm::vec3(x / ((float)terrain.resolution.x), 0, z / ((float)terrain.resolution.y)) * glm::vec3((float)terrain.dimensions.x, 0, (float)terrain.dimensions.y);
+                mesh.vertices.push_back(position);
 
                 //this is not actually used in the shader (we calculate the normals again in the fragment shader
                 mesh.normals.push_back({0.0f, 1.0f, 0.0f});

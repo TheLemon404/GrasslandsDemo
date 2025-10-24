@@ -41,6 +41,7 @@ struct GraphicsDemoScene : Scene {
         registry.emplace<MeshComponent>(terrain);
         registry.emplace<TerrainComponent>(terrain);
         registry.emplace<FoliageComponent>(terrain);
+        registry.emplace<InstancedMeshComponent>(terrain);
 
         //add all the needed systems to our scene
         systems.push_back(std::make_unique<TerrainSystem>());

@@ -6,40 +6,35 @@
 #include "glad/glad.h"
 
 void FoliageSystem::Start(entt::registry &registry) {
-    auto view = registry.view<FoliageComponent>();
+    auto view = registry.view<FoliageComponent, InstancedMeshComponent>();
     for (auto& entity : view) {
         TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
-        foliageComponent.meshLOD0 = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
-        foliageComponent.meshLOD0.material.roughness = 1.0f;
-        foliageComponent.meshLOD0.material.shader = std::make_shared<Shader>(Application::Get()->renderer.grassInstancedShader);
-        foliageComponent.meshLOD0.cullBackface = false;
-        foliageComponent.meshLOD0.castsShadow = false;
+        InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
+        instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
+        instancedMeshComponent.mesh.material.roughness = 1.0f;
+        instancedMeshComponent.mesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.grassInstancedShader);
+        instancedMeshComponent.mesh.cullBackface = false;
+        instancedMeshComponent.mesh.castsShadow = false;
 
         //to compute the placement of the grass in a compute shader
         foliageComponent.foliagePlacementComputeShader = Renderer::CreateComputeShader("resources/shaders/grass_instanced.comp");
 
-        const int maxGrassInstances = 2000000;
+        const int totalNumInstances = foliageComponent.numInstancesPerAxis.x * foliageComponent.numInstancesPerAxis.y;
+
         glGenBuffers(1, &foliageComponent.instancedSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instancedSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * maxGrassInstances, nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * totalNumInstances, nullptr, GL_DYNAMIC_DRAW);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, foliageComponent.instancedSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-        DrawElementsIndirectCommand cmd1 = {};
-        cmd1.instanceCount = 0;
-        cmd1.count = foliageComponent.meshLOD0.indices.size();
-
-        glGenBuffers(1, &foliageComponent.indirectDrawCommandSSBO);
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, foliageComponent.indirectDrawCommandSSBO);
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(cmd1), &cmd1, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, foliageComponent.indirectDrawCommandSSBO);
-
         glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "terrainDimensions", terrainComponent.dimensions);
-        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "patchDimensions", terrainComponent.dimensions / foliageComponent.numPatches);
-        glDispatchCompute(foliageComponent.numPatches.x, foliageComponent.numPatches.y, 1);
-        glMemoryBarrier(GL_COMMAND_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.numInstancesPerAxis);
+        glDispatchCompute(foliageComponent.numInstancesPerAxis.x, foliageComponent.numInstancesPerAxis.y, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+        instancedMeshComponent.transforms.resize(totalNumInstances);
     }
 }
 
