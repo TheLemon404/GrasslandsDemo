@@ -5,7 +5,7 @@
 
 struct FoliageComponent {
     //must be a perfect square
-    glm::ivec2 numInstancesPerAxis = glm::ivec2(100, 100);
+    glm::ivec2 numInstancesPerAxis = glm::ivec2(500);
     float cameraCutoffDistance = 200.0f;
     float breezeAmount = 0.25f;
     float windAmount = 25.0f;

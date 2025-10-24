@@ -18,10 +18,11 @@ void TerrainSystem::Start(entt::registry& registry) {
         // Build vertex positions and uvs
         for (int i = 0; i < terrain.resolution.x; ++i) {
             for (int j = 0; j < terrain.resolution.y; ++j) {
-                float x = static_cast<float>(i) - terrain.resolution.x / 2;
-                float z = static_cast<float>(j) - terrain.resolution.y / 2;
+                float x = static_cast<float>(i) / ((float)terrain.resolution.x - 1);
+                float z = static_cast<float>(j) / ((float)terrain.resolution.y - 1);
 
-                glm::vec3 position = glm::vec3(x / ((float)terrain.resolution.x), 0, z / ((float)terrain.resolution.y)) * glm::vec3((float)terrain.dimensions.x, 0, (float)terrain.dimensions.y);
+                glm::vec3 position = glm::vec3(x, 0, z) * glm::vec3((float)terrain.dimensions.x, 0, (float)terrain.dimensions.y);
+                position -= glm::vec3(terrain.dimensions.x / 2.0, 0, terrain.dimensions.y / 2.0);
                 mesh.vertices.push_back(position);
 
                 //this is not actually used in the shader (we calculate the normals again in the fragment shader
