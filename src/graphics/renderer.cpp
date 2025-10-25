@@ -503,6 +503,7 @@ void Renderer::UpdateTransform(Transform& transform) {
 
 void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.albedo", mesh.material.albedo);
+    UploadShaderUniformVec3(mesh.material.shader->programId, "material.shadowColor", mesh.material.shadowColor);
     UploadShaderUniformFloat(mesh.material.shader->programId, "material.roughness", mesh.material.roughness);
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
         UploadShaderUniformInt(mesh.material.shader->programId, "material.hasBaseTexture", 0);
@@ -715,7 +716,6 @@ void Renderer::DrawActiveScene() {
         //upload environment data
         UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
         UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.ambientColor);
-        UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
         UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
 
         glActiveTexture(GL_TEXTURE1);
@@ -781,7 +781,6 @@ void Renderer::DrawActiveScene() {
             UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)app->clock.time);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.ambientColor);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
             UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);

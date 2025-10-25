@@ -1,4 +1,5 @@
 #pragma once
+#include "ext/vector_float2.hpp"
 #include "material.hpp"
 
 struct Mesh {

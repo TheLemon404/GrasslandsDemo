@@ -1,7 +1,6 @@
 #pragma once
 
 #include "system.hpp"
-#include <cstdint>
 
 struct CameraSystem : System {
     void Start(entt::registry& registry) override {};

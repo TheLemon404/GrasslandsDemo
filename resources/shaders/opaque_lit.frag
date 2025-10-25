@@ -9,7 +9,6 @@ layout(location = 3) in vec4 fragPosLightSpace;
 
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
-uniform vec3 shadowColor;
 uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;
@@ -45,7 +44,7 @@ void main() {
         shadow = shadowCalculation(pNormal);
     }
 
-    vec3 lighting = (shadowColor + (1.0 - shadow)) * max((diffuse + finalSpecular), vec3(0.2)) * color.rgb;
+    vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * (diffuse + finalSpecular);
     fragColor = vec4(lighting, 1.0f);
 
     gl_FragDepth = gl_FragCoord.z;

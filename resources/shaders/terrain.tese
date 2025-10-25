@@ -43,13 +43,13 @@ void main() {
     vec4 p1 = (p11 - p10) * u + p10;
     vec4 p = (p1 - p0) * v + p0;
 
-    float height = texture(heightMap, uv).r * heightMapStrength;
+    float height = pow(texture(heightMap, uv).r, 4) * heightMapStrength;
     vec4 worldPosition = transformationData.transform * p;
     vec4 modifiedPosition = (worldPosition + vec4(0.0f, height, 0.0f, 0.0f));
 
     // compute patch surface normal
-    float neightborHeight1 = texture(heightMap, uv + vec2(texelSize.x, 0)).r * heightMapStrength;
-    float neightborHeight2 = texture(heightMap, uv + vec2(0, texelSize.y)).r * heightMapStrength;
+    float neightborHeight1 = pow(texture(heightMap, uv + vec2(texelSize.x, 0)).r, 4) * heightMapStrength;
+    float neightborHeight2 = pow(texture(heightMap, uv + vec2(0, texelSize.y)).r, 4) * heightMapStrength;
     vec3 neighborVec1 = vec3(1, neightborHeight1, 0) - vec3(0, height, 0);
     vec3 neighborVec2 = vec3(0, neightborHeight2, 1) - vec3(0, height, 0);
     vec4 normal = normalize(vec4(cross(neighborVec2, neighborVec1), 0));

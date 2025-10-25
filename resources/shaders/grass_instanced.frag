@@ -18,7 +18,6 @@ uniform MaterialData material;
 
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
-uniform vec3 shadowColor;
 uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;
@@ -62,7 +61,7 @@ void main() {
     float s = sin(terrainSpaceUV.x * 10.0) * cos(terrainSpaceUV.y * 10.0);
     vec3 factoredColor = mix(color.rgb, color2.rgb, s);
 
-    vec3 lighting = (shadowColor + (1.0 - shadow)) * max((diffuse + finalSpecular), vec3(0.8)) * factoredColor;
+    vec3 lighting = (material.shadowColor + (1.0 - shadow)) * max((diffuse + finalSpecular), vec3(0.8)) * factoredColor;
     vec4 final = vec4(lighting, 1.0f);
     if (material.hasBaseTexture == 1) {
         fragColor = final * color.a;

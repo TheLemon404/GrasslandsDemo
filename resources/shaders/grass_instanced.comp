@@ -17,6 +17,7 @@ uniform float clipDistance;
 uniform float frustrumClip;
 
 uniform ivec2 terrainDimensions;
+uniform ivec2 foliageChunkDimensions;
 uniform ivec2 numInstancesPerAxis;
 
 #include <shader_utils.glsl>
@@ -33,11 +34,11 @@ void main() {
 
     //create initial grass blade position
     vec3 position = vec3(cameraPosition.x, 0, cameraPosition.z) + vec3(
-                xp * terrainDimensions.x,
+                xp * foliageChunkDimensions.x,
                 0,
-                zp * terrainDimensions.y
+                zp * foliageChunkDimensions.y
             );
-    position -= vec3(terrainDimensions.x / float(2.0), 0, terrainDimensions.y / float(2.0));
+    position -= vec3(foliageChunkDimensions.x / float(2.0), 0, foliageChunkDimensions.y / float(2.0));
 
     //snap to grid and then add pseudo-random offset
     position -= position % vec3(0.5f);
@@ -52,7 +53,7 @@ void main() {
 
     //displace with heightmap
     vec2 terrainSpaceUV = ((vec2(position.x, position.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
-    position += vec3(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f);
+    position += vec3(0.0f, pow(texture(heightMap, terrainSpaceUV).r, 4) * heightMapStrength, 0.0f);
 
     //perform frustrum culling
     vec4 clipPos = cameraProjection * cameraView * vec4(position, 1.0);

@@ -49,6 +49,7 @@ void FoliageSystem::Update(entt::registry& registry) {
 
         glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "terrainDimensions", terrainComponent.dimensions);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "foliageChunkDimensions", foliageComponent.foliageChunkDimensions);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.numInstancesPerAxis);
         Renderer::UploadShaderUniformVec3(foliageComponent.foliagePlacementComputeShader.programId, "cameraPosition", app->renderer.camera.position);
         Renderer::UploadShaderUniformMat4(foliageComponent.foliagePlacementComputeShader.programId, "cameraProjection", app->renderer.camera.projection);
@@ -73,11 +74,11 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
 
         Renderer::UploadShaderUniformVec2(mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
 
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor",  glm::vec3(0.435, 0.643, 0.353)); // earthy green
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor",  glm::vec3(0.780, 0.925, 0.667)); // soft mint highlight
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor",  glm::vec3(0.34f, 0.42f, 0.22f)); // rich olive-green base
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor",  glm::vec3(0.78f, 0.86f, 0.46f)); // soft, sunlit yellow-green tip
 
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor2", glm::vec3(0.557, 0.725, 0.408)); // olive tint
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor2", glm::vec3(0.867, 0.941, 0.710)); // pale lime accent
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor2", glm::vec3(0.28f, 0.38f, 0.26f)); // deeper cool tone in shadows
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor2", glm::vec3(0.62f, 0.73f, 0.48f)); // muted painterly highlight
 
         Renderer::UploadShaderUniformInt(mesh.material.shader->programId, "perlinTexture", 3);
         Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "breezeAmount", foliageComponent.breezeAmount);
