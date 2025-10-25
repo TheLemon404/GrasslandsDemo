@@ -2,11 +2,11 @@
 
 #include <transformation_data.glsl>
 
-layout (location = 0) in vec3 aPosition;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aUV;
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aUV;
 
-layout (binding = 2, std430) readonly buffer ssbo {
+layout(binding = 2, std430) readonly buffer ssbo {
     mat4 transformMatrices[];
 };
 
@@ -14,20 +14,17 @@ uniform vec2 terrainSpaceUVBounds;
 
 uniform TransformationData transformationData;
 
-uniform sampler2D heightMap;
-uniform float heightMapStrength;
-
 uniform float time;
 uniform sampler2D perlinTexture;
 uniform float breezeAmount;
 uniform float windAmount;
 uniform float windAngle;
 
-layout (location = 0) out vec3 pPosition;
-layout (location = 1) out vec3 pNormal;
-layout (location = 2) out vec2 pUV;
-layout (location = 3) out vec4 fragPosLightSpace;
-layout (location = 4) out vec2 terrainSpaceUV;
+layout(location = 0) out vec3 pPosition;
+layout(location = 1) out vec3 pNormal;
+layout(location = 2) out vec2 pUV;
+layout(location = 3) out vec4 fragPosLightSpace;
+layout(location = 4) out vec2 terrainSpaceUV;
 
 #include <matrix_math.glsl>
 
@@ -51,12 +48,10 @@ void main()
     vec4 CurvedWorldPosition = (transformMatrices[gl_InstanceID] * (vec4(aPosition, 1.0f) * breezeCurveMatrix * windCurveMatrix));
     mat3 normalMatrix = mat3(transpose(inverse(transformMatrices[gl_InstanceID])));
 
-    vec4 heightOffsetPosition = (CurvedWorldPosition + vec4(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f, 0.0f));
-
-    gl_Position = transformationData.projection * transformationData.view * heightOffsetPosition;
+    gl_Position = transformationData.projection * transformationData.view * CurvedWorldPosition;
 
     pNormal = normalize(normalMatrix * aNormal).xyz;
     pUV = aUV;
-    pPosition = heightOffsetPosition.xyz;
-    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * heightOffsetPosition;
+    pPosition = CurvedWorldPosition.xyz;
+    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * CurvedWorldPosition;
 }

@@ -2,28 +2,27 @@
 
 #include <material_data.glsl>
 
-layout (location = 0) in vec3 pPosition;
-layout (location = 1) in vec3 pNormal;
-layout (location = 2) in vec2 pUV;
-layout (location = 3) in vec4 fragPosLightSpace;
+layout(location = 0) in vec3 pPosition;
+layout(location = 1) in vec3 pNormal;
+layout(location = 2) in vec2 pUV;
+layout(location = 3) in vec4 fragPosLightSpace;
 
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
 uniform vec3 shadowColor;
-uniform float blurDistance;
 uniform vec3 cameraPosition;
 uniform sampler2D shadowMap;
 
 uniform MaterialData material;
 
-layout (location = 0) out vec4 fragColor;
+layout(location = 0) out vec4 fragColor;
 
 #include <lighting_calculations.glsl>
 
 void main() {
     vec4 color = vec4(1.0);
 
-    if(material.hasBaseTexture == 1) {
+    if (material.hasBaseTexture == 1) {
         color = texture(material.baseTexture, pUV);
     }
     else {

@@ -19,7 +19,6 @@ uniform MaterialData material;
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
 uniform vec3 shadowColor;
-uniform float blurDistance;
 uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;

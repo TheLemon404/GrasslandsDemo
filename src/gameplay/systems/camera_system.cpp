@@ -26,4 +26,6 @@ void CameraSystem::Update(entt::registry& registry) {
             app->renderer.camera.position -= (forward * mouseDelta.y + right * mouseDelta.x) * app->settings.mouseMoveSensitivity;
         }
     }
+
+    app->renderer.UpdateCameraMatrices();
 }

@@ -556,8 +556,6 @@ void Renderer::Initialize() {
 void Renderer::DrawActiveScene() {
     std::shared_ptr<Application> app = Application::Get();
 
-    UpdateCameraMatrices();
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
@@ -716,10 +714,10 @@ void Renderer::DrawActiveScene() {
 
         //upload environment data
         UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
-        UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.sunColor);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.ambientColor);
         UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
         UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
-        UploadShaderUniformFloat(mesh.material.shader->programId, "blurDistance", app->settings.blurDistance);
+
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 
@@ -782,10 +780,9 @@ void Renderer::DrawActiveScene() {
             //upload environment data
             UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)app->clock.time);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.sunColor);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.ambientColor);
             UploadShaderUniformVec3(mesh.material.shader->programId, "shadowColor", app->scene.environment.shadowColor);
             UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
-            UploadShaderUniformFloat(mesh.material.shader->programId, "blurDistance", app->settings.blurDistance);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
 

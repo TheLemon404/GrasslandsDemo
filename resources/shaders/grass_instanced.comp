@@ -1,12 +1,20 @@
 #version 430 core
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
 
 layout(binding = 2, std430) buffer transformsSSBO {
     mat4 transformMatrices[];
 };
 
+uniform sampler2D heightMap;
+uniform float heightMapStrength;
+uniform vec2 terrainSpaceUVBounds;
+
 uniform vec3 cameraPosition;
+uniform mat4 cameraProjection;
+uniform mat4 cameraView;
+uniform float clipDistance;
+uniform float frustrumClip;
 
 uniform ivec2 terrainDimensions;
 uniform ivec2 numInstancesPerAxis;
@@ -15,25 +23,49 @@ uniform ivec2 numInstancesPerAxis;
 #include <matrix_math.glsl>
 
 void main() {
-    uint x = gl_WorkGroupID.x;
-    uint z = gl_WorkGroupID.y;
+    uint x = gl_GlobalInvocationID.x;
+    uint z = gl_GlobalInvocationID.y;
 
     vec3 scaleVector = vec3(1);
-    float rotate = random(vec2(x, z));
 
     float xp = float(x) / float(numInstancesPerAxis.x);
     float zp = float(z) / float(numInstancesPerAxis.y);
 
-    vec3 position = vec3(
-            xp * terrainDimensions.x,
-            0,
-            zp * terrainDimensions.y
-        );
+    //create initial grass blade position
+    vec3 position = vec3(cameraPosition.x, 0, cameraPosition.z) + vec3(
+                xp * terrainDimensions.x,
+                0,
+                zp * terrainDimensions.y
+            );
     position -= vec3(terrainDimensions.x / float(2.0), 0, terrainDimensions.y / float(2.0));
 
-    if(distance(cameraPosition, position) > 100) return;
+    //snap to grid and then add pseudo-random offset
+    position -= position % vec3(0.5f);
+    float rand = random(position.xz);
+    position += vec3(rand, 0, rand);
 
-    mat4 transform = translate(position) * rotateY(rotate) * scale(scaleVector);
+    //cull if extending beyond terrain
+    if (
+        position.x < -terrainDimensions.x / 2.0 || position.x > terrainDimensions.x / 2.0 ||
+            position.z < -terrainDimensions.y / 2.0 || position.z > terrainDimensions.y / 2.0
+    ) return;
+
+    //displace with heightmap
+    vec2 terrainSpaceUV = ((vec2(position.x, position.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
+    position += vec3(0.0f, texture(heightMap, terrainSpaceUV).r * heightMapStrength, 0.0f);
+
+    //perform frustrum culling
+    vec4 clipPos = cameraProjection * cameraView * vec4(position, 1.0);
+    vec3 ndc = clipPos.xyz / clipPos.w;
+    if (
+        ndc.x < -frustrumClip || ndc.x > frustrumClip ||
+            ndc.y < -frustrumClip || ndc.y > frustrumClip ||
+            ndc.z < -frustrumClip || ndc.z > frustrumClip
+    ) return;
+
+    if (distance(position, cameraPosition) > clipDistance) return;
+
+    mat4 transform = translate(position) * scale(scaleVector);
 
     transformMatrices[(x * numInstancesPerAxis.y) + z] = transform;
 }

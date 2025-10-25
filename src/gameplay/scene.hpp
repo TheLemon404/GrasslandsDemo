@@ -44,8 +44,8 @@ struct GraphicsDemoScene : Scene {
         registry.emplace<InstancedMeshComponent>(terrain);
 
         //add all the needed systems to our scene
+        systems.push_back(std::make_unique<CameraSystem>());
         systems.push_back(std::make_unique<TerrainSystem>());
         systems.push_back(std::make_unique<FoliageSystem>());
-        systems.push_back(std::make_unique<CameraSystem>());
     }
 };

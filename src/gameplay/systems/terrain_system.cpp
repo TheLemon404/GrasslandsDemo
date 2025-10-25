@@ -63,7 +63,7 @@ void TerrainSystem::Start(entt::registry& registry) {
 
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.terrainShader);
-        mesh.material.albedo = glm::vec3(0.82, 0.941, 0.659);
+        mesh.material.albedo = glm::vec3(0.73, 0.68, 0.52); // warm beige earth tone
         mesh.material.roughness = 1.0f;
     }
 }
