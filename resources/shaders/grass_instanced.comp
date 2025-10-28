@@ -2,8 +2,8 @@
 
 layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
 
-layout(binding = 2, std430) buffer transformsSSBO {
-    mat4 transformMatrices[];
+layout(binding = 0, std430) buffer lod0SSBO {
+    mat4 lod0TransformMatrices[];
 };
 
 uniform sampler2D heightMap;
@@ -68,5 +68,5 @@ void main() {
 
     mat4 transform = translate(position) * scale(scaleVector);
 
-    transformMatrices[(x * numInstancesPerAxis.y) + z] = transform;
+    lod0TransformMatrices[(x * numInstancesPerAxis.y) + z] = transform;
 }

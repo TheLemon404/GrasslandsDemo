@@ -6,8 +6,8 @@ layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
 
-layout(binding = 2, std430) readonly buffer ssbo {
-    mat4 transformMatrices[];
+layout(binding = 0, std430) readonly buffer lod0SSBO {
+    mat4 lod0TransformMatrices[];
 };
 
 uniform vec2 terrainSpaceUVBounds;
@@ -33,7 +33,7 @@ layout(location = 4) out vec2 terrainSpaceUV;
 void main()
 {
     //grass curving and wind
-    vec4 preCurvedWorldPosition = (transformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f));
+    vec4 preCurvedWorldPosition = (lod0TransformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f));
     terrainSpaceUV = ((vec2(preCurvedWorldPosition.x, preCurvedWorldPosition.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
 
     float wind = texture(perlinTexture, terrainSpaceUV + vec2(time / 35)).r;
@@ -45,8 +45,8 @@ void main()
     float windCurveAmount = aUV.y * wind;
     mat4 windCurveMatrix = rotateY(windCurveAmount * windAmount);
 
-    vec4 CurvedWorldPosition = (transformMatrices[gl_InstanceID] * (vec4(aPosition, 1.0f) * breezeCurveMatrix * windCurveMatrix));
-    mat3 normalMatrix = mat3(transpose(inverse(transformMatrices[gl_InstanceID])));
+    vec4 CurvedWorldPosition = (lod0TransformMatrices[gl_InstanceID] * (vec4(aPosition, 1.0f) * breezeCurveMatrix * windCurveMatrix));
+    mat3 normalMatrix = mat3(transpose(inverse(lod0TransformMatrices[gl_InstanceID])));
 
     gl_Position = transformationData.projection * transformationData.view * CurvedWorldPosition;
 

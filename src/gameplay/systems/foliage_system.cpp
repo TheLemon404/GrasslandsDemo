@@ -23,15 +23,22 @@ void FoliageSystem::Start(entt::registry &registry) {
         //to compute the placement of the grass in a compute shader
         foliageComponent.foliagePlacementComputeShader = Renderer::CreateComputeShader("resources/shaders/grass_instanced.comp");
 
-        const int totalNumInstances = foliageComponent.numInstancesPerAxis.x * foliageComponent.numInstancesPerAxis.y;
+        const int lod0NumInstances = foliageComponent.lod0ChunkData.numInstancesPerAxis.x * foliageComponent.lod0ChunkData.numInstancesPerAxis.y;
+        const int lod1NumInstances = foliageComponent.lod1ChunkData.numInstancesPerAxis.x * foliageComponent.lod1ChunkData.numInstancesPerAxis.y;
 
-        glGenBuffers(1, &foliageComponent.instancedSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instancedSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * totalNumInstances, nullptr, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, foliageComponent.instancedSSBO);
+        glGenBuffers(1, &foliageComponent.lod0instanceSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.lod0instanceSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * lod0NumInstances, nullptr, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, foliageComponent.lod0instanceSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-        instancedMeshComponent.transforms.resize(totalNumInstances);
+        glGenBuffers(1, &foliageComponent.lod1instanceSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.lod1instanceSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * lod1NumInstances, nullptr, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, foliageComponent.lod1instanceSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+        instancedMeshComponent.transforms.resize(lod0NumInstances);
     }
 }
 
@@ -43,14 +50,14 @@ void FoliageSystem::Update(entt::registry& registry) {
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instancedSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.lod0instanceSSBO);
         glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, nullptr);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
         glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "terrainDimensions", terrainComponent.dimensions);
-        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "foliageChunkDimensions", foliageComponent.foliageChunkDimensions);
-        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.numInstancesPerAxis);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "foliageChunkDimensions", foliageComponent.lod0ChunkData.chunkDimensions);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.lod0ChunkData.numInstancesPerAxis);
         Renderer::UploadShaderUniformVec3(foliageComponent.foliagePlacementComputeShader.programId, "cameraPosition", app->renderer.camera.position);
         Renderer::UploadShaderUniformMat4(foliageComponent.foliagePlacementComputeShader.programId, "cameraProjection", app->renderer.camera.projection);
         Renderer::UploadShaderUniformMat4(foliageComponent.foliagePlacementComputeShader.programId, "cameraView", app->renderer.camera.view);
@@ -62,7 +69,7 @@ void FoliageSystem::Update(entt::registry& registry) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
 
-        glDispatchCompute(foliageComponent.numInstancesPerAxis.x / 4, foliageComponent.numInstancesPerAxis.y / 4, 1);
+        glDispatchCompute(foliageComponent.lod0ChunkData.numInstancesPerAxis.x / 4, foliageComponent.lod0ChunkData.numInstancesPerAxis.y / 4, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 }
