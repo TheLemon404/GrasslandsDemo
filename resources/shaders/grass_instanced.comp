@@ -41,7 +41,7 @@ void main() {
     position -= vec3(foliageChunkDimensions.x / float(2.0), 0, foliageChunkDimensions.y / float(2.0));
 
     //snap to grid and then add pseudo-random offset
-    position -= position % vec3(0.5f);
+    position -= mod(position, vec3(0.5f));
     float rand = random(position.xz);
     position += vec3(rand, 0, rand);
 
