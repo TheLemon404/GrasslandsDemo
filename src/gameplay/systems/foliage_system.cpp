@@ -9,12 +9,13 @@
 #include <memory>
 
 void FoliageSystem::Start(entt::registry &registry) {
-    auto view = registry.view<FoliageComponent, TerrainComponent, InstancedMeshComponent>();
+    auto view = registry.view<FoliageComponent, InstancedMeshComponent>();
     for (auto& entity : view) {
-        TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
+        entt::entity terrainEntity = registry.get<TransformComponent>(entity).parent;
+        TerrainComponent& terrainComponent = registry.get<TerrainComponent>(terrainEntity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
-        instancedMeshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/grass_blade.obj", "resources/meshes/grass_blade.mtl", true);
+        instancedMeshComponent.mesh = Renderer::LoadMeshAsset(foliageComponent.meshFile + ".obj", foliageComponent.meshFile + ".mtl", true);
         instancedMeshComponent.mesh.material.roughness = 1.0f;
         instancedMeshComponent.mesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.grassInstancedShader);
         instancedMeshComponent.mesh.cullBackface = false;
@@ -23,41 +24,37 @@ void FoliageSystem::Start(entt::registry &registry) {
         //to compute the placement of the grass in a compute shader
         foliageComponent.foliagePlacementComputeShader = Renderer::CreateComputeShader("resources/shaders/grass_instanced.comp");
 
-        const int lod0NumInstances = foliageComponent.lod0ChunkData.numInstancesPerAxis.x * foliageComponent.lod0ChunkData.numInstancesPerAxis.y;
-        const int lod1NumInstances = foliageComponent.lod1ChunkData.numInstancesPerAxis.x * foliageComponent.lod1ChunkData.numInstancesPerAxis.y;
+        const int numInstances = foliageComponent.chunkData.numInstancesPerAxis.x * foliageComponent.chunkData.numInstancesPerAxis.y;
 
-        glGenBuffers(1, &foliageComponent.lod0instanceSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.lod0instanceSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * lod0NumInstances, nullptr, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, foliageComponent.lod0instanceSSBO);
+        instancedMeshComponent.ssboBinding = 0;
+        glGenBuffers(1, &foliageComponent.instanceSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instanceSSBO);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * numInstances, nullptr, GL_DYNAMIC_DRAW);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, foliageComponent.instanceSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-        glGenBuffers(1, &foliageComponent.lod1instanceSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.lod1instanceSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * lod1NumInstances, nullptr, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, foliageComponent.lod1instanceSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-        instancedMeshComponent.transforms.resize(lod0NumInstances);
+        instancedMeshComponent.transforms.resize(numInstances);
     }
 }
 
 void FoliageSystem::Update(entt::registry& registry) {
-    auto view = registry.view<FoliageComponent, TerrainComponent>();
+    auto view = registry.view<FoliageComponent>();
     std::shared_ptr<Application> app = Application::Get();
 
     for (auto& entity : view) {
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
-        TerrainComponent& terrainComponent = registry.get<TerrainComponent>(entity);
+        entt::entity terrainEntity = registry.get<TransformComponent>(entity).parent;
+        TerrainComponent& terrainComponent = registry.get<TerrainComponent>(terrainEntity);
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.lod0instanceSSBO);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instanceSSBO);
         glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, nullptr);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
         glUseProgram(foliageComponent.foliagePlacementComputeShader.programId);
         Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "terrainDimensions", terrainComponent.dimensions);
-        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "foliageChunkDimensions", foliageComponent.lod0ChunkData.chunkDimensions);
-        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.lod0ChunkData.numInstancesPerAxis);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "foliageChunkDimensions", foliageComponent.chunkData.chunkDimensions);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "chunkCenterCutout", foliageComponent.chunkData.chunkCenterCutout);
+        Renderer::UploadShaderUniformIVec2(foliageComponent.foliagePlacementComputeShader.programId, "numInstancesPerAxis", foliageComponent.chunkData.numInstancesPerAxis);
         Renderer::UploadShaderUniformVec3(foliageComponent.foliagePlacementComputeShader.programId, "cameraPosition", app->renderer.camera.position);
         Renderer::UploadShaderUniformMat4(foliageComponent.foliagePlacementComputeShader.programId, "cameraProjection", app->renderer.camera.projection);
         Renderer::UploadShaderUniformMat4(foliageComponent.foliagePlacementComputeShader.programId, "cameraView", app->renderer.camera.view);
@@ -69,14 +66,15 @@ void FoliageSystem::Update(entt::registry& registry) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
 
-        glDispatchCompute(foliageComponent.lod0ChunkData.numInstancesPerAxis.x / 4, foliageComponent.lod0ChunkData.numInstancesPerAxis.y / 4, 1);
+        glDispatchCompute(foliageComponent.chunkData.numInstancesPerAxis.x / 4, foliageComponent.chunkData.numInstancesPerAxis.y / 4, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 }
 
 void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
-    if (Application::Get()->scene.registry.try_get<TerrainComponent>(entity) && Application::Get()->scene.registry.try_get<FoliageComponent>(entity)) {
-        TerrainComponent terrainComponent = Application::Get()->scene.registry.get<TerrainComponent>(entity);
+    if (Application::Get()->scene.registry.try_get<FoliageComponent>(entity)) {
+        entt::entity terrainEntity = Application::Get()->scene.registry.get<TransformComponent>(entity).parent;
+        TerrainComponent& terrainComponent = Application::Get()->scene.registry.get<TerrainComponent>(terrainEntity);
         FoliageComponent foliageComponent = Application::Get()->scene.registry.get<FoliageComponent>(entity);
 
         Renderer::UploadShaderUniformVec2(mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);

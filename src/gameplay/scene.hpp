@@ -1,13 +1,17 @@
 #pragma once
 
 #include <entt/entt.hpp>
+#include <memory>
 #include "components/terrain_component.hpp"
 #include "../graphics/renderer.hpp"
 #include "components/foliage_component.hpp"
 #include "components/instanced_mesh_component.hpp"
 #include "components/mesh_component.hpp"
+#include "components/transform_component.hpp"
+#include "entt/entity/fwd.hpp"
 #include "systems/camera_system.hpp"
 #include "systems/foliage_system.hpp"
+#include "systems/instanced_mesh_system.hpp"
 #include "systems/system.hpp"
 #include "systems/terrain_system.hpp"
 #include "world/environment.hpp"
@@ -35,16 +39,32 @@ struct GraphicsDemoScene : Scene {
         mesh.mesh = Renderer::LoadMeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl", false);
         transformComponent.transform.position.y = 5.0f;
 
-        entt::entity terrain = registry.create();
         //for the terrain mesh and grass foliage
+        entt::entity terrain = registry.create();
         registry.emplace<TransformComponent>(terrain);
         registry.emplace<MeshComponent>(terrain);
         registry.emplace<TerrainComponent>(terrain);
-        registry.emplace<FoliageComponent>(terrain);
-        registry.emplace<InstancedMeshComponent>(terrain);
+
+        entt::entity grassLOD0 = registry.create();
+        registry.emplace<TransformComponent>(grassLOD0, TransformComponent(terrain));
+        FoliageComponent& foliageComponentLOD0 = registry.emplace<FoliageComponent>(grassLOD0);
+        foliageComponentLOD0.meshFile = "resources/meshes/grass_blade";
+        registry.emplace<InstancedMeshComponent>(grassLOD0);
+
+        entt::entity rocks = registry.create();
+        InstancedMeshComponent& instancedRocks =registry.emplace<InstancedMeshComponent>(rocks);
+        instancedRocks.mesh = Renderer::LoadMeshAsset("resources/meshes/rocks.obj", "resources/meshes/rocks.mtl", true);
+        instancedRocks.transforms.push_back(
+            {
+                .position = glm::vec3(0, 5.0f, 0),
+                .rotation = glm::vec3(0),
+                .scale = glm::vec3(1.0f)
+            }
+        );
 
         //add all the needed systems to our scene
         systems.push_back(std::make_unique<CameraSystem>());
+        systems.push_back(std::make_unique<InstancedMeshSystem>());
         systems.push_back(std::make_unique<TerrainSystem>());
         systems.push_back(std::make_unique<FoliageSystem>());
     }

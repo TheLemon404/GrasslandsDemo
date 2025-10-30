@@ -4,6 +4,7 @@
 
 struct InstancedMeshComponent {
     std::vector<Transform> transforms;
-    unsigned int instancedSSBO;
+    unsigned int instanceSSBO;
+    int ssboBinding = 1;
     Mesh mesh;
 };

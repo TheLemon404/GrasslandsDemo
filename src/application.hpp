@@ -1,5 +1,4 @@
 #pragma once
-#include <cstddef>
 #include <memory>
 #define GLFW_INCLUDE_NONE
 #include "quil.h"

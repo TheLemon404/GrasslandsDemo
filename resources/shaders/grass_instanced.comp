@@ -2,8 +2,8 @@
 
 layout(local_size_x = 4, local_size_y = 4, local_size_z = 1) in;
 
-layout(binding = 0, std430) buffer lod0SSBO {
-    mat4 lod0TransformMatrices[];
+layout(binding = 0, std430) buffer grassSSBO {
+    mat4 grassTransformMatrices[];
 };
 
 uniform sampler2D heightMap;
@@ -18,6 +18,7 @@ uniform float frustrumClip;
 
 uniform ivec2 terrainDimensions;
 uniform ivec2 foliageChunkDimensions;
+uniform ivec2 chunkCenterCutout;
 uniform ivec2 numInstancesPerAxis;
 
 #include <shader_utils.glsl>
@@ -33,15 +34,14 @@ void main() {
     float zp = float(z) / float(numInstancesPerAxis.y);
 
     //create initial grass blade position
-    vec3 position = vec3(cameraPosition.x, 0, cameraPosition.z) + vec3(
-                xp * foliageChunkDimensions.x,
-                0,
-                zp * foliageChunkDimensions.y
-            );
+    vec3 position = vec3(
+            xp * foliageChunkDimensions.x,
+            0,
+            zp * foliageChunkDimensions.y
+        );
     position -= vec3(foliageChunkDimensions.x / float(2.0), 0, foliageChunkDimensions.y / float(2.0));
 
     //snap to grid and then add pseudo-random offset
-    position -= mod(position, vec3(0.5f));
     float rand = random(position.xz);
     position += vec3(rand, 0, rand);
 
@@ -64,9 +64,7 @@ void main() {
             ndc.z < -frustrumClip || ndc.z > frustrumClip
     ) return;
 
-    if (distance(position, cameraPosition) > clipDistance) return;
-
     mat4 transform = translate(position) * scale(scaleVector);
 
-    lod0TransformMatrices[(x * numInstancesPerAxis.y) + z] = transform;
+    grassTransformMatrices[(x * numInstancesPerAxis.y) + z] = transform;
 }
