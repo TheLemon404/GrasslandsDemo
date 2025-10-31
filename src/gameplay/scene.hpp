@@ -52,13 +52,14 @@ struct GraphicsDemoScene : Scene {
         registry.emplace<InstancedMeshComponent>(grassLOD0);
 
         entt::entity rocks = registry.create();
+        TransformComponent& rockTransformComponent = registry.emplace<TransformComponent>(rocks, TransformComponent(terrain));
         InstancedMeshComponent& instancedRocks = registry.emplace<InstancedMeshComponent>(rocks);
         instancedRocks.mesh = Renderer::LoadMeshAsset("resources/meshes/rocks.obj", "resources/meshes/rocks.mtl", true);
         instancedRocks.transforms.push_back(
             {
-                .position = glm::vec3(0, 10.0f, 0),
+                .position = glm::vec3(0),
                 .rotation = glm::vec3(0.0f),
-                .scale = glm::vec3(3.0f)
+                .scale = glm::vec3(10.0f)
             }
         );
 

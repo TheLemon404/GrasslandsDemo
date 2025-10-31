@@ -4,6 +4,7 @@
 #include "../components/instanced_mesh_component.hpp"
 #include "glad/glad.h"
 #include <gl/gl.h>
+#include <memory>
 
 void InstancedMeshSystem::Start(entt::registry& registry) {
     auto view = registry.view<InstancedMeshComponent>();
@@ -41,5 +42,15 @@ void InstancedMeshSystem::Start(entt::registry& registry) {
 }
 
 void InstancedMeshSystem::InsertInstancedDrawLogic(Mesh& mesh, entt::entity& entity) {
-    InstancedMeshComponent& instancedMeshComponent = Application::Get()->scene.registry.get<InstancedMeshComponent>(entity);
+    std::shared_ptr<Application> app = Application::Get();
+    InstancedMeshComponent& instancedMeshComponent = app->scene.registry.get<InstancedMeshComponent>(entity);
+    entt::entity terrainEntity = app->scene.registry.get<TransformComponent>(entity).parent;
+    TerrainComponent& terrainComponent = app->scene.registry.get<TerrainComponent>(terrainEntity);
+
+    Renderer::UploadShaderUniformInt(instancedMeshComponent.mesh.material.shader->programId, "heightMap", 0);
+    Renderer::UploadShaderUniformFloat(instancedMeshComponent.mesh.material.shader->programId, "heightMapStrength", terrainComponent.maxHeight);
+    Renderer::UploadShaderUniformVec2(instancedMeshComponent.mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
 }
