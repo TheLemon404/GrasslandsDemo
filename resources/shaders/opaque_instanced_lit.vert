@@ -5,10 +5,7 @@
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aUV;
-
-layout(binding = 1, std430) readonly buffer instanceSSBO {
-    mat4 transformMatrices[];
-};
+layout(location = 3) in mat4 aTransform;
 
 uniform TransformationData transformationData;
 
@@ -19,12 +16,12 @@ layout(location = 3) out vec4 fragPosLightSpace;
 
 void main()
 {
-    mat3 normalMatrix = mat3(transpose(inverse(transformMatrices[gl_InstanceID])));
+    mat3 normalMatrix = mat3(transpose(inverse(aTransform)));
 
-    gl_Position = transformationData.projection * transformationData.view * transformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f);
+    gl_Position = transformationData.projection * transformationData.view * aTransform * vec4(aPosition, 1.0f);
 
     pNormal = normalize(normalMatrix * aNormal).xyz;
     pUV = aUV;
-    pPosition = (transformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f)).xyz;
-    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * transformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f);
+    pPosition = (aTransform * vec4(aPosition, 1.0f)).xyz;
+    fragPosLightSpace = transformationData.lightProjection * transformationData.lightView * aTransform * vec4(aPosition, 1.0f);
 }
