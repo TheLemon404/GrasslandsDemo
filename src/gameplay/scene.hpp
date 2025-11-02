@@ -24,7 +24,7 @@ struct Scene {
     std::vector<std::shared_ptr<System>> systems;
 
     protected:
-    void PlaceOnTerrainRandom(std::vector<Transform>& transforms, glm::vec2 terrainDimensions, glm::ivec2 gridDimensions, float scale = 10.0f, float heighOffset = 0.5f);
+    void PlaceOnTerrainRandom(std::vector<Transform>& transforms, glm::vec2 terrainDimensions, glm::ivec2 gridDimensions, float placementPercent = 3.0f, float scale = 10.0f, float heighOffset = 0.5f);
 
     public:
     void Start();
@@ -37,13 +37,6 @@ struct Scene {
 
 struct GraphicsDemoScene : Scene {
     GraphicsDemoScene() {
-        entt::entity ent = registry.create();
-        TransformComponent& transformComponent = registry.emplace<TransformComponent>(ent);
-        MeshComponent& mesh = registry.emplace<MeshComponent>(ent);
-        mesh.mesh = Renderer::LoadMeshAsset("resources/meshes/box.obj", "resources/meshes/box.mtl", false);
-        transformComponent.transform.position.y = 5.0f;
-
-        //for the terrain mesh and grass foliage
         entt::entity terrain = registry.create();
         registry.emplace<TransformComponent>(terrain);
         registry.emplace<MeshComponent>(terrain);
@@ -60,8 +53,18 @@ struct GraphicsDemoScene : Scene {
         InstancedMeshComponent& instancedRocks = registry.emplace<InstancedMeshComponent>(rocks);
         instancedRocks.mesh = Renderer::LoadMeshAsset("resources/meshes/rocks.obj", "resources/meshes/rocks.mtl", true);
         instancedRocks.mesh.material.roughness = 0.5f;
-        instancedRocks.mesh.material.albedo = glm::vec3(0.7f);
-        PlaceOnTerrainRandom(instancedRocks.transforms, terrainComponent.dimensions, glm::ivec2(10));
+        instancedRocks.mesh.material.albedo = glm::vec3(0.42f);
+        instancedRocks.mesh.material.shadowColor = glm::vec3(0.149f);
+        PlaceOnTerrainRandom(instancedRocks.transforms, terrainComponent.dimensions, glm::ivec2(10), 5.0);
+
+        entt::entity trees = registry.create();
+        TransformComponent& treeTransformComponent = registry.emplace<TransformComponent>(trees, TransformComponent(terrain));
+        InstancedMeshComponent& instancedTrees = registry.emplace<InstancedMeshComponent>(trees);
+        instancedTrees.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", "resources/meshes/tree.mtl", true);
+        instancedTrees.mesh.material.roughness = 0.5f;
+        instancedTrees.mesh.material.albedo = glm::vec3(0.678f, 0.545f, 0.357f);
+        instancedTrees.mesh.material.shadowColor = glm::vec3(0.369f, 0.294f, 0.192f);
+        PlaceOnTerrainRandom(instancedTrees.transforms, terrainComponent.dimensions, glm::ivec2(50), 4.0f, 3.0f);
 
         //add all the needed systems to our scene
         systems.push_back(std::make_unique<CameraSystem>());
