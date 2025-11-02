@@ -1,7 +1,5 @@
 #include "renderer.hpp"
 
-#include <algorithm>
-
 #include "tiny_obj_loader.h"
 #include <cassert>
 #include <iostream>
@@ -567,7 +565,7 @@ void Renderer::DrawActiveScene() {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     //"dynamic" shadow pass (this desperately needs to be re-done).
-    float orthoSize = 50.0f;
+    float orthoSize = app->settings.orthoSize;
     float near_plane = 0.01f;
     float far_plane  = 20.0f;
     glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);

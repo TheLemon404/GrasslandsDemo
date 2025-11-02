@@ -7,4 +7,5 @@ struct Settings {
     float mouseLookSensitivity = 0.005f;
     int msaaSamples = 4;
     int shadowFramebufferResolution = 2048;
+    float orthoSize = 50.0f;
 };

@@ -44,6 +44,7 @@ void DebugLayer::DrawDebugGUI() {
         ImGui::InputFloat("Frustrum Clip", &app->settings.frustrumClip);
         ImGui::InputFloat("Clip Distance", &app->settings.clipDistance);
         ImGui::InputInt("Shadowmap Framebuffer Resolution", &app->settings.shadowFramebufferResolution);
+        ImGui::InputFloat("Shadowmap Camera Ortho View Size", &app->settings.orthoSize);
     }
     int shouldReloadApplication = false;
     if (ImGui::Button("Reload Application")) {
