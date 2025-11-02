@@ -21,6 +21,6 @@
   {
     "label": "Run GrasslandsDemo",
     "command": "./cmake-build-debug/GrasslandsDemo.exe",
-    "use_new_terminal": true
+    "use_new_terminal": false
   }
 ]
