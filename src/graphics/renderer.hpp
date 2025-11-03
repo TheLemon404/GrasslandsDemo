@@ -80,7 +80,7 @@ public:
     static Mesh LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath, bool instanced);
 
     static Framebuffer CreateFramebuffer(int width, int height);
-    static Framebuffer CreateShadowFramebuffer(int width, int height);
+    static Framebuffer CreateShadowMapFramebuffer(int width, int height);
 
     void Initialize();
     void DrawActiveScene();

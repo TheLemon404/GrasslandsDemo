@@ -45,6 +45,8 @@ void DebugLayer::DrawDebugGUI() {
         ImGui::InputFloat("Clip Distance", &app->settings.clipDistance);
         ImGui::InputInt("Shadowmap Framebuffer Resolution", &app->settings.shadowFramebufferResolution);
         ImGui::InputFloat("Shadowmap Camera Ortho View Size", &app->settings.orthoSize);
+        ImGui::InputFloat("Shadowmap Near Plane", &app->settings.shadowMapNearPlane);
+        ImGui::InputFloat("Shadowmap Far Plane", &app->settings.shadowMapFarPlane);
     }
     int shouldReloadApplication = false;
     if (ImGui::Button("Reload Application")) {

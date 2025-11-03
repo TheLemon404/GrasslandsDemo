@@ -63,8 +63,8 @@ void TerrainSystem::Start(entt::registry& registry) {
 
         Renderer::CreateMeshBuffers(mesh);
         mesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.terrainShader);
-        mesh.material.albedo = glm::vec3(0.58f, 0.52f, 0.39f); // warm ochre soil tone
-        mesh.material.shadowColor = glm::vec3(0.42f, 0.44f, 0.37f); // cooler moss-gray shadow tone
+        mesh.material.albedo = glm::vec3(0.471f, 0.522f, 0.392f); // warm ochre soil tone
+        mesh.material.shadowColor = glm::vec3(0.294f, 0.388f, 0.267f); // cooler moss-gray shadow tone
         mesh.material.roughness = 1.0f;
     }
 }

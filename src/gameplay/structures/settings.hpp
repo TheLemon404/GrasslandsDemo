@@ -6,6 +6,8 @@ struct Settings {
     float mouseMoveSensitivity = 0.1f;
     float mouseLookSensitivity = 0.005f;
     int msaaSamples = 4;
-    int shadowFramebufferResolution = 2048;
-    float orthoSize = 50.0f;
+    int shadowFramebufferResolution = 4098;
+    float orthoSize = 375.0f;
+    float shadowMapNearPlane = 0.1f;
+    float shadowMapFarPlane = 500.0f;
 };

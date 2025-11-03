@@ -452,7 +452,7 @@ Framebuffer Renderer::CreateFramebuffer(int width, int height) {
     return framebuffer;
 }
 
-Framebuffer Renderer::CreateShadowFramebuffer(int width, int height) {
+Framebuffer Renderer::CreateShadowMapFramebuffer(int width, int height) {
     Framebuffer framebuffer = {
         .depthTexture = {
             .width = width,
@@ -598,6 +598,8 @@ void Renderer::DrawObjects(glm::mat4 lightView, glm::mat4 lightProjection) {
         glEnableVertexAttribArray(2);
         glUseProgram(mesh.material.shader->programId);
 
+        UploadShaderUniformFloat(mesh.material.shader->programId, "nearPlane", app->settings.shadowMapNearPlane);
+        UploadShaderUniformFloat(mesh.material.shader->programId, "farPlane", app->settings.shadowMapFarPlane);
         UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
         UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
 
@@ -665,6 +667,8 @@ void Renderer::DrawInstancedObjects(glm::mat4 lightView, glm::mat4 lightProjecti
             glEnableVertexAttribArray(3);
             glUseProgram(mesh.material.shader->programId);
 
+            UploadShaderUniformFloat(mesh.material.shader->programId, "nearPlane", app->settings.shadowMapNearPlane);
+            UploadShaderUniformFloat(mesh.material.shader->programId, "farPlane", app->settings.shadowMapFarPlane);
             UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
             UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
 
@@ -751,7 +755,7 @@ void Renderer::Initialize() {
     terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag", "resources/shaders/terrain.tesc", "resources/shaders/terrain.tese");
     grassInstancedShader = CreateShader("resources/shaders/grass_instanced.vert", "resources/shaders/grass_instanced.frag");
 
-    shadowFramebuffer = CreateShadowFramebuffer(app->settings.shadowFramebufferResolution, Application::Get()->settings.shadowFramebufferResolution);
+    shadowFramebuffer = CreateShadowMapFramebuffer(app->settings.shadowFramebufferResolution, Application::Get()->settings.shadowFramebufferResolution);
 
     UpdateCameraMatrices();
 
@@ -786,13 +790,13 @@ void Renderer::DrawActiveScene() {
 
     //"dynamic" shadow pass (this desperately needs to be re-done).
     float orthoSize = app->settings.orthoSize;
-    float near_plane = 0.01f;
-    float far_plane  = 20.0f;
+    float near_plane = app->settings.shadowMapNearPlane;
+    float far_plane = app->settings.shadowMapFarPlane;
     glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
     // place the light at some distance in the light direction behind the scene center
     glm::vec3 sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f); // choose logical scene center or camera target
     glm::vec3 lightDir = glm::normalize(Application::Get()->scene.environment.sunDirection); // direction the sun shines
-    float lightDistance = 5.0f; // tune this so the light is sufficiently far out
+    float lightDistance = 250.0f; // tune this so the light is sufficiently far out
     glm::vec3 lightPos = sceneCenter - lightDir * lightDistance; // position the light "behind" the scene
     glm::vec3 lightTarget = sceneCenter;
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
