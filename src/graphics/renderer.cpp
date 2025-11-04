@@ -598,8 +598,6 @@ void Renderer::DrawObjects(glm::mat4 lightView, glm::mat4 lightProjection) {
         glEnableVertexAttribArray(2);
         glUseProgram(mesh.material.shader->programId);
 
-        UploadShaderUniformFloat(mesh.material.shader->programId, "nearPlane", app->settings.shadowMapNearPlane);
-        UploadShaderUniformFloat(mesh.material.shader->programId, "farPlane", app->settings.shadowMapFarPlane);
         UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
         UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
 
@@ -667,8 +665,6 @@ void Renderer::DrawInstancedObjects(glm::mat4 lightView, glm::mat4 lightProjecti
             glEnableVertexAttribArray(3);
             glUseProgram(mesh.material.shader->programId);
 
-            UploadShaderUniformFloat(mesh.material.shader->programId, "nearPlane", app->settings.shadowMapNearPlane);
-            UploadShaderUniformFloat(mesh.material.shader->programId, "farPlane", app->settings.shadowMapFarPlane);
             UploadShaderUniformInt(mesh.material.shader->programId, "receivesShadow", mesh.receivesShadow);
             UploadShaderUniformInt(mesh.material.shader->programId, "shadowMap", 1);
 

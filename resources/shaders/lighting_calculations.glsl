@@ -1,11 +1,3 @@
-uniform float nearPlane;
-uniform float farPlane;
-
-float linearizeDepth(float depth) {
-    float z = depth * 2.0 - 1.0; // Back to NDC
-    return (2.0 * nearPlane * farPlane) / (farPlane + nearPlane - z * (farPlane - nearPlane));
-}
-
 float shadowCalculation(vec3 normal) {
     float bias = max(0.0001 * (1.0 - dot(normal, sunDirection)), 0.005);
     // perform perspective divide
