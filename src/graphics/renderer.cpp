@@ -111,7 +111,7 @@ Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
     return result;
 }
 
-Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath, bool instanced) {
+Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath, bool instanced, int asset) {
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = materialAssetPath.c_str();
 
@@ -149,7 +149,7 @@ Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAsse
     }
 
     Application::Get()->logger.Log("successfully loaded obj file: " + meshAssetPath);
-    return meshes[0];
+    return meshes[asset];
 }
 
 void Renderer::RotateCameraArount(float angle, glm::vec3 axis, glm::vec3 origin) {
