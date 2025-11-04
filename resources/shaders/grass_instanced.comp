@@ -55,6 +55,8 @@ void main() {
     vec2 terrainSpaceUV = ((vec2(position.x, position.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
     position += vec3(0.0f, pow(texture(heightMap, terrainSpaceUV).r, 4) * heightMapStrength, 0.0f);
 
+    if (distance(position.xz, cameraPosition.xz) > clipDistance) return;
+
     //perform frustrum culling
     vec4 clipPos = cameraProjection * cameraView * vec4(position, 1.0);
     vec3 ndc = clipPos.xyz / clipPos.w;

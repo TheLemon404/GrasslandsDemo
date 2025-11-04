@@ -1,7 +1,7 @@
 #pragma once
 
 struct Settings {
-    float clipDistance = 1000.0f;
+    float clipDistance = 500.0f;
     float frustrumClip = 1.1f;
     float mouseMoveSensitivity = 0.1f;
     float mouseLookSensitivity = 0.005f;
