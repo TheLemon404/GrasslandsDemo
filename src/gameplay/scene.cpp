@@ -13,7 +13,7 @@ void Scene::PlaceOnTerrainRandom(std::vector<Transform>& transforms, glm::vec2 t
                 transforms.push_back({
                     .position = pos,
                     .rotation = glm::vec3(0.0f, rand(), 0.0f),
-                    .scale = glm::vec3(scale)
+                    .scale = glm::vec3(scale + (rand() / (float)RAND_MAX) * 2.0f)
                 });
             }
         }

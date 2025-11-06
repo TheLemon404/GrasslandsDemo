@@ -51,7 +51,7 @@ void main() {
 
     vec3 ambient = mix(coolSky * 0.6, warmSun * 0.4, 0.4) * 0.45;
     vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * diffuse + ambient;
-    fragColor = vec4(lighting, 1.0f);
+    fragColor = vec4(lighting, color.a);
 
     gl_FragDepth = gl_FragCoord.z;
 }
