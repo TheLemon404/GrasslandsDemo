@@ -53,8 +53,8 @@ struct GraphicsDemoScene : Scene {
         InstancedMeshComponent& instancedRocks = registry.emplace<InstancedMeshComponent>(rocks);
         instancedRocks.mesh = Renderer::LoadMeshAsset("resources/meshes/rocks.obj", "resources/meshes/rocks.mtl", true);
         instancedRocks.mesh.material.roughness = 0.5f;
-        instancedRocks.mesh.material.albedo = glm::vec3(0.42f);
-        instancedRocks.mesh.material.shadowColor = glm::vec3(0.149f);
+        instancedRocks.mesh.material.albedo = glm::vec3(0.58f, 0.63f, 0.70f);
+        instancedRocks.mesh.material.shadowColor = glm::vec3(0.42f, 0.48f, 0.54f);
         PlaceOnTerrainRandom(instancedRocks.transforms, terrainComponent.dimensions, glm::ivec2(10), 5.0);
 
         entt::entity treeStumps = registry.create();
@@ -62,17 +62,17 @@ struct GraphicsDemoScene : Scene {
         InstancedMeshComponent& instancedTreeStumps = registry.emplace<InstancedMeshComponent>(treeStumps);
         instancedTreeStumps.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", "resources/meshes/tree.mtl", true);
         instancedTreeStumps.mesh.material.roughness = 0.8f;
-        instancedTreeStumps.mesh.material.albedo = glm::vec3(0.678f, 0.545f, 0.357f);
-        instancedTreeStumps.mesh.material.shadowColor = glm::vec3(0.369f, 0.294f, 0.192f);
-        PlaceOnTerrainRandom(instancedTreeStumps.transforms, terrainComponent.dimensions, glm::ivec2(50), 4.0f, 3.0f);
+        instancedTreeStumps.mesh.material.albedo = glm::vec3(0.66f, 0.52f, 0.34f);
+        instancedTreeStumps.mesh.material.shadowColor = glm::vec3(0.42f, 0.33f, 0.20f);
+        PlaceOnTerrainRandom(instancedTreeStumps.transforms, terrainComponent.dimensions, glm::ivec2(35), 4.0f, 3.0f);
 
         entt::entity trees = registry.create();
         TransformComponent& treesTransformComponent = registry.emplace<TransformComponent>(trees, TransformComponent(terrain));
         InstancedMeshComponent& instancedTrees = registry.emplace<InstancedMeshComponent>(trees);
         instancedTrees.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", "resources/meshes/tree.mtl", true, 1);
         instancedTrees.mesh.material.roughness = 1.0f;
-        instancedTrees.mesh.material.albedo = glm::vec3(0.62f, 0.86f, 0.46f);
-        instancedTrees.mesh.material.shadowColor = glm::vec3(0.357f, 0.478f, 0.275f);
+        instancedTrees.mesh.material.albedo = glm::vec3(0.68f, 0.88f, 0.52f);
+        instancedTrees.mesh.material.shadowColor = glm::vec3(0.46f, 0.66f, 0.38f);
         instancedTrees.transforms = instancedTreeStumps.transforms;
 
 

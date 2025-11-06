@@ -44,24 +44,31 @@ void main() {
         color2 = vec4(mix(lowerColor2, upperColor2, pUV.y), 1.0);
     }
 
+    vec3 warmSun = vec3(1.05, 0.95, 0.82); // subtle warm tint
+    vec3 coolSky = vec3(0.60, 0.75, 0.90); // slightly more saturated blue
+
     float depth = distance(cameraPosition, pPosition);
 
-    vec3 diffuse = max(dot(pNormal, normalize(-sunDirection)), 0.0f) * sunColor;
+    float diffuseStrength = 0.5 + 0.5 * max(dot(pNormal, normalize(-sunDirection)), 0.0);
+    vec3 diffuse = mix(coolSky, warmSun, diffuseStrength) * 0.9;
 
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0f), 32);
-    vec3 finalSpecular = (1.0 - material.roughness) * spec * sunColor;
 
-    float shadow = 0.0f;
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 8.0);
+    vec3 finalSpecular = warmSun * 0.25;
+
+    float shadow = 0.0;
     if (receivesShadow != 0) {
         shadow = shadowCalculation(pNormal);
     }
+    shadow = pow(shadow, 0.6);
 
     float s = sin(terrainSpaceUV.x * 10.0) * cos(terrainSpaceUV.y * 10.0);
     vec3 factoredColor = mix(color.rgb, color2.rgb, s);
 
-    vec3 lighting = (material.shadowColor + (1.0 - shadow)) * max((diffuse + finalSpecular), vec3(0.8)) * factoredColor;
+    vec3 ambient = mix(coolSky * 0.6, warmSun * 0.4, 0.4);
+    vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * diffuse + ambient * 0.45;
     vec4 final = vec4(lighting, 1.0f);
     if (material.hasBaseTexture == 1) {
         fragColor = final * color.a;
