@@ -723,10 +723,9 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.albedo", mesh.material.albedo);
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.shadowColor", mesh.material.shadowColor);
     UploadShaderUniformFloat(mesh.material.shader->programId, "material.roughness", mesh.material.roughness);
-    if (mesh.material.applyWind) {
-        UploadShaderUniformInt(mesh.material.shader->programId, "applyWind", (int)mesh.material.applyWind);
-        UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
-    }
+    UploadShaderUniformInt(mesh.material.shader->programId, "applyWind", (int)mesh.material.applyWind);
+    UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
+
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
         UploadShaderUniformInt(mesh.material.shader->programId, "material.hasBaseTexture", 0);
     }

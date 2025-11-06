@@ -24,7 +24,7 @@ void main()
     mat3 normalMatrix = mat3(transpose(inverse(aTransform)));
 
     vec4 worldPosition = aTransform * vec4(aPosition, 1.0f);
-    if (applyWind == 1) {
+    if (applyWind != 0) {
         vec3 windPosition = aPosition + sin(time + length(aPosition.xz)) / 25.0f;
         worldPosition = aTransform * vec4(windPosition, 1.0f);
     }
