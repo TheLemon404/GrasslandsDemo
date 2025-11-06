@@ -11,8 +11,8 @@
 > This project is actively in development. This is not the finished project, and I am currently building this demo in my free time.
 
 # Screenshots
-<img width="1919" height="1002" alt="Screenshot 2025-11-02 084117" src="https://github.com/user-attachments/assets/243a0d91-f4d6-4aec-a361-657b88ec999d" />
-<img width="1919" height="1006" alt="Screenshot 2025-11-02 084150" src="https://github.com/user-attachments/assets/2dbcaed9-9f37-496e-b5b0-b664b036afe3" />
+<img width="1711" height="1386" alt="Screenshot 2025-11-05 200743" src="https://github.com/user-attachments/assets/59d9c6cd-b747-459e-87a9-71d657dc037a" />
+<img width="1717" height="1388" alt="Screenshot 2025-11-05 200754" src="https://github.com/user-attachments/assets/97fa38ec-2d98-4b2f-b002-856a8e140ca1" />
 <img width="1919" height="1001" alt="Screenshot 2025-11-02 084233" src="https://github.com/user-attachments/assets/e665205a-a069-4dab-9c4a-fd19aff336dd" />
 
 # Lessons Learned
