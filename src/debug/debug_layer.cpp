@@ -35,6 +35,9 @@ void DebugLayer::DrawDebugGUI() {
         ImGui::Checkbox("Show Shadow-Map Debug", &app->renderer.showShadowMapDebug);
         ImGui::Checkbox("Draw Wireframe", &app->renderer.drawWireframe);
         ImGui::Checkbox("Draw Grass", &app->renderer.drawGrass);
+        ImGui::Checkbox("Draw Instanced Meshes", &app->renderer.drawInstancedMeshes);
+        ImGui::Checkbox("Draw Regular Meshes", &app->renderer.drawRegularMeshes);
+        ImGui::Checkbox("Dispatch Grass Compute Shader", &app->settings.dispatchGrassComputeShader);
         if (ImGui::Button("Reload Shaders")) {
             app->renderer.ReloadShaders();
         }

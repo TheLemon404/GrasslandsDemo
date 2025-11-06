@@ -46,6 +46,8 @@ void FoliageSystem::Update(entt::registry& registry) {
         entt::entity terrainEntity = registry.get<TransformComponent>(entity).parent;
         TerrainComponent& terrainComponent = registry.get<TerrainComponent>(terrainEntity);
 
+        if(!app->settings.dispatchGrassComputeShader) return;
+
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instanceSSBO);
         glClearBufferData(GL_SHADER_STORAGE_BUFFER, GL_R32UI, GL_RED, GL_UNSIGNED_INT, nullptr);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -66,7 +68,7 @@ void FoliageSystem::Update(entt::registry& registry) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, terrainComponent.heightMapTexture.id);
 
-        glDispatchCompute(foliageComponent.chunkData.numInstancesPerAxis.x / 4, foliageComponent.chunkData.numInstancesPerAxis.y / 4, 1);
+        glDispatchCompute(foliageComponent.chunkData.numInstancesPerAxis.x / 16, foliageComponent.chunkData.numInstancesPerAxis.y / 16, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 }

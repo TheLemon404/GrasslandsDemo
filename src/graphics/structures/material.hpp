@@ -11,4 +11,5 @@ struct Material {
     glm::vec3 shadowColor = glm::vec3(0.4f);
     float roughness = 0.5f;
     Texture texture = {};
+    bool applyWind = false;
 };

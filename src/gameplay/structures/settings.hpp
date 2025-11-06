@@ -10,4 +10,5 @@ struct Settings {
     float orthoSize = 375.0f;
     float shadowMapNearPlane = 0.1f;
     float shadowMapFarPlane = 500.0f;
+    bool dispatchGrassComputeShader = true;
 };

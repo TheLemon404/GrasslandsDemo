@@ -723,6 +723,10 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.albedo", mesh.material.albedo);
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.shadowColor", mesh.material.shadowColor);
     UploadShaderUniformFloat(mesh.material.shader->programId, "material.roughness", mesh.material.roughness);
+    if (mesh.material.applyWind) {
+        UploadShaderUniformInt(mesh.material.shader->programId, "applyWind", (int)mesh.material.applyWind);
+        UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)Application::Get()->clock.time);
+    }
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
         UploadShaderUniformInt(mesh.material.shader->programId, "material.hasBaseTexture", 0);
     }
@@ -798,8 +802,12 @@ void Renderer::DrawActiveScene() {
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::mat4 lightView = glm::lookAt(lightPos, lightTarget, up);
 
-    DrawShadowMapObjects(lightView, lightProjection);
-    DrawInstancedShadowMapObjects(lightView, lightProjection);
+    if(drawRegularMeshes){
+        DrawShadowMapObjects(lightView, lightProjection);
+    }
+    if(drawInstancedMeshes){
+        DrawInstancedShadowMapObjects(lightView, lightProjection);
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -817,8 +825,12 @@ void Renderer::DrawActiveScene() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    DrawObjects(lightView, lightProjection);
-    DrawInstancedObjects(lightView, lightProjection);
+    if(drawRegularMeshes){
+        DrawObjects(lightView, lightProjection);
+    }
+    if(drawInstancedMeshes){
+        DrawInstancedObjects(lightView, lightProjection);
+    }
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -854,4 +866,5 @@ void Renderer::CleanUp() {
     DeleteShader(postpassShader);
     DeleteShader(fullscreenQuadShader);
     DeleteShader(terrainShader);
+    DeleteShader(grassInstancedShader);
 }
