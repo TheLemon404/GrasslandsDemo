@@ -45,7 +45,7 @@ void main() {
     float rand = random(position.xz) * 1.0f;
     position += vec3(rand, 0, rand);
 
-    //cull if extending beyond terrain
+    //cull if beyond terrain bounds;
     if (
         position.x < -terrainDimensions.x / 2.0 || position.x > terrainDimensions.x / 2.0 ||
             position.z < -terrainDimensions.y / 2.0 || position.z > terrainDimensions.y / 2.0
@@ -63,6 +63,13 @@ void main() {
             ndc.y < -frustrumClip || ndc.y > frustrumClip ||
             ndc.z < -frustrumClip || ndc.z > frustrumClip
     ) return;
+
+    //cull if extending beyond terrain
+    if (distance(position, vec3(0.0f)) > 250.0f) {
+        float falloff = (distance(position, vec3(0.0f)) - 250) / 50.0f;
+        scaleVector -= vec3(falloff);
+        scaleVector = clamp(scaleVector, vec3(0.0f), vec3(1.0f));
+    }
 
     mat4 transform = translate(position) * rotateY(rand) * scale(scaleVector);
 

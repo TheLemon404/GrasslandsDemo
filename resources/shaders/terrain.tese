@@ -15,6 +15,7 @@ layout(location = 0) out vec3 pPosition;
 layout(location = 1) out vec3 pNormal;
 layout(location = 2) out vec2 pUV;
 layout(location = 3) out vec4 fragPosLightSpace;
+layout(location = 4) out float opacity;
 
 void main() {
     vec2 texelSize = 1.0 / textureSize(heightMap, 0);
@@ -53,6 +54,14 @@ void main() {
     vec3 neighborVec1 = vec3(1, neightborHeight1, 0) - vec3(0, height, 0);
     vec3 neighborVec2 = vec3(0, neightborHeight2, 1) - vec3(0, height, 0);
     vec4 normal = normalize(vec4(cross(neighborVec2, neighborVec1), 0));
+
+    opacity = 1.0f;
+
+    if (distance(modifiedPosition.xyz, vec3(0.0f)) > 250.0f) {
+        float falloff = (distance(modifiedPosition.xyz, vec3(0.0f)) - 250) / 75.0f;
+        opacity -= falloff;
+        opacity = clamp(opacity, 0.0f, 1.0f);
+    }
 
     gl_Position = transformationData.projection * transformationData.view * modifiedPosition;
     pUV = uv;

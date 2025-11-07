@@ -64,11 +64,11 @@ void main() {
     }
     shadow = pow(shadow, 0.6);
 
-    float s = sin(terrainSpaceUV.x * 10.0) * cos(terrainSpaceUV.y * 10.0);
+    float s = sin(terrainSpaceUV.x * 20.0) * cos(terrainSpaceUV.y * 20.0);
     vec3 factoredColor = mix(color.rgb, color2.rgb, s);
 
     vec3 ambient = mix(coolSky * 0.6, warmSun * 0.4, 0.4);
-    vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * diffuse + ambient * 0.45;
+    vec3 lighting = mix(material.shadowColor, factoredColor.rgb, (1.0 - shadow)) * diffuse + ambient * 0.45;
     vec4 final = vec4(lighting, 1.0f);
     if (material.hasBaseTexture == 1) {
         fragColor = final * color.a;

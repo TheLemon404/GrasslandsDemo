@@ -82,11 +82,11 @@ void FoliageSystem::InsertInstancedDrawLogic(Mesh &mesh, entt::entity &entity) {
         Renderer::UploadShaderUniformVec2(mesh.material.shader->programId, "terrainSpaceUVBounds", terrainComponent.dimensions / 2);
 
         // Lively but still painterly grass tones
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor",  glm::vec3(0.52f, 0.66f, 0.36f)); // deep grassy green
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor",  glm::vec3(0.78f, 0.90f, 0.52f)); // sunlit green-yellow tip
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor",  glm::vec3(0.48f, 0.63f, 0.35f)); // base green, calmer tone
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor",  glm::vec3(0.72f, 0.84f, 0.50f)); // lighter, softer tip
 
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor2", glm::vec3(0.44f, 0.60f, 0.33f)); // shadow-side tone
-        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor2", glm::vec3(0.72f, 0.85f, 0.58f)); // painterly highlight
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "lowerColor2", glm::vec3(0.42f, 0.57f, 0.32f)); // shadow variation
+        Renderer::UploadShaderUniformVec3(mesh.material.shader->programId, "upperColor2", glm::vec3(0.68f, 0.80f, 0.55f)); // gentle highlight
 
         Renderer::UploadShaderUniformInt(mesh.material.shader->programId, "perlinTexture", 3);
         Renderer::UploadShaderUniformFloat(mesh.material.shader->programId, "breezeAmount", foliageComponent.breezeAmount);

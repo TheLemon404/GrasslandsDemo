@@ -6,6 +6,7 @@ layout(location = 0) in vec3 pPosition;
 layout(location = 1) in vec3 pNormal;
 layout(location = 2) in vec2 pUV;
 layout(location = 3) in vec4 fragPosLightSpace;
+layout(location = 4) in float opacity;
 
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
@@ -40,7 +41,7 @@ void main() {
     float shadow = shadowCalculation(pNormal);
 
     vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * (diffuse + finalSpecular);
-    vec4 final = vec4(lighting, 1.0f);
+    vec4 final = vec4(lighting, opacity);
     fragColor = final;
     gl_FragDepth = gl_FragCoord.z;
 }

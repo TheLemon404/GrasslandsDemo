@@ -24,7 +24,7 @@ struct Scene {
     std::vector<std::shared_ptr<System>> systems;
 
     protected:
-    void PlaceOnTerrainRandom(std::vector<Transform>& transforms, glm::vec2 terrainDimensions, glm::ivec2 gridDimensions, float placementPercent = 3.0f, float scale = 10.0f, float heighOffset = 0.0f);
+    void PlaceTreesPseudoRandom(std::vector<Transform>& transforms, glm::vec2 terrainDimensions, glm::ivec2 gridDimensions, float placementPercent = 3.0f, float scale = 10.0f, float heighOffset = 0.0f);
 
     public:
     void Start();
@@ -55,7 +55,7 @@ struct GraphicsDemoScene : Scene {
         instancedRocks.mesh.material.roughness = 0.5f;
         instancedRocks.mesh.material.albedo = glm::vec3(0.58f, 0.63f, 0.70f);
         instancedRocks.mesh.material.shadowColor = glm::vec3(0.42f, 0.48f, 0.54f);
-        PlaceOnTerrainRandom(instancedRocks.transforms, terrainComponent.dimensions, glm::ivec2(10), 5.0);
+        PlaceTreesPseudoRandom(instancedRocks.transforms, terrainComponent.dimensions, glm::ivec2(10), 5.0);
 
 
         //tree 1
@@ -66,7 +66,7 @@ struct GraphicsDemoScene : Scene {
         instancedTreeStumps.mesh.material.roughness = 0.8f;
         instancedTreeStumps.mesh.material.albedo = glm::vec3(0.66f, 0.52f, 0.34f);
         instancedTreeStumps.mesh.material.shadowColor = glm::vec3(0.42f, 0.33f, 0.20f);
-        PlaceOnTerrainRandom(instancedTreeStumps.transforms, terrainComponent.dimensions, glm::ivec2(30), 3.0f, 3.0f);
+        PlaceTreesPseudoRandom(instancedTreeStumps.transforms, terrainComponent.dimensions, glm::ivec2(30), 5.0f, 3.0f);
 
         entt::entity trees = registry.create();
         TransformComponent& treesTransformComponent = registry.emplace<TransformComponent>(trees, TransformComponent(terrain));
@@ -88,7 +88,7 @@ struct GraphicsDemoScene : Scene {
         instancedTree2.mesh.material.applyWind = true;
         instancedTree2.mesh.material.albedo = glm::vec3(0.68f, 0.88f, 0.52f);
         instancedTree2.mesh.material.shadowColor = glm::vec3(0.46f, 0.66f, 0.38f);
-        PlaceOnTerrainRandom(instancedTree2.transforms, terrainComponent.dimensions, glm::ivec2(30), 1.0f, 3.0f);
+        PlaceTreesPseudoRandom(instancedTree2.transforms, terrainComponent.dimensions, glm::ivec2(30), 3.0f, 3.0f);
 
         for(int i = 0; i < instancedTree2.transforms.size(); i++) {
             for(Transform& pt : instancedTreeStumps.transforms) {

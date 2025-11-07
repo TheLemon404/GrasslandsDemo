@@ -4,8 +4,8 @@
 
 struct TerrainComponent {
     float maxHeight = 25.0f;
-    glm::ivec2 dimensions = glm::ivec2(500);
-    glm::ivec2 resolution = glm::ivec2(50);
+    glm::ivec2 dimensions = glm::ivec2(750);
+    glm::ivec2 resolution = glm::ivec2(75);
 
     Texture heightMapTexture;
     Texture perlinNoiseTexture;
