@@ -1,4 +1,4 @@
-<img width="3439" height="1393" alt="Screenshot 2025-10-18 215735" src="https://github.com/user-attachments/assets/a926b867-ca99-4379-85c5-5024b71a29ad" /><img width="3439" height="1393" alt="Screenshot 2025-10-18 215735" src="https://github.com/user-attachments/assets/336b7e2c-d394-4fb7-871c-9b6a19969ae6" /># Foliage Rendering Demo
+# Foliage Rendering Demo
   An OpenGL graphics demo capable of rendering large amounts of foliage using instanced rendering, compute shaders, and tessellation shaders
 
 # Details
