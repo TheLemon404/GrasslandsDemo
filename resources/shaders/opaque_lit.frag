@@ -40,7 +40,7 @@ void main() {
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
 
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 2.0);
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), material.shininess);
     vec3 finalSpecular = (1.0 - material.roughness) * spec * warmSun;
 
     float shadow = 0.0;

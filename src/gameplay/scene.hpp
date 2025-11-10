@@ -115,6 +115,7 @@ struct GraphicsDemoScene : Scene {
         MeshComponent& meshComponent = registry.emplace<MeshComponent>(woodSphere);
         meshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/demo_material_sphere.obj", false);
         meshComponent.mesh.material.roughness = 1.0f;
+        meshComponent.mesh.material.shininess = 1.0f;
         meshComponent.mesh.material.albedo = glm::vec3(0.66f, 0.52f, 0.34f);
         meshComponent.mesh.material.shadowColor = glm::vec3(0.42f, 0.33f, 0.20f);
 
@@ -124,6 +125,7 @@ struct GraphicsDemoScene : Scene {
         MeshComponent& meshMComponent = registry.emplace<MeshComponent>(metalSphere);
         meshMComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/demo_material_sphere.obj", false);
         meshMComponent.mesh.material.roughness = 0.2f;
+        meshMComponent.mesh.material.shininess = 4.0f;
         meshMComponent.mesh.material.albedo = glm::vec3(0.612f);
         meshMComponent.mesh.material.shadowColor = glm::vec3(0.259f);
 
@@ -133,6 +135,7 @@ struct GraphicsDemoScene : Scene {
         MeshComponent& meshBComponent = registry.emplace<MeshComponent>(metalBSphere);
         meshBComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/demo_material_sphere.obj", false);
         meshBComponent.mesh.material.roughness = 0.6f;
+        meshBComponent.mesh.material.shininess = 2.0f;
         meshBComponent.mesh.material.albedo = glm::vec3(0.388f, 0.694f, 1.0f);
         meshBComponent.mesh.material.shadowColor = glm::vec3(0.157f, 0.259f, 0.361f);
 

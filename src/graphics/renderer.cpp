@@ -720,6 +720,7 @@ void Renderer::UploadMaterialUniforms(Mesh &mesh) {
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.albedo", mesh.material.albedo);
     UploadShaderUniformVec3(mesh.material.shader->programId, "material.shadowColor", mesh.material.shadowColor);
     UploadShaderUniformFloat(mesh.material.shader->programId, "material.roughness", mesh.material.roughness);
+    UploadShaderUniformFloat(mesh.material.shader->programId, "material.shininess", mesh.material.shininess);
     if (mesh.material.texture.width == 0 && mesh.material.texture.height == 0) {
         UploadShaderUniformInt(mesh.material.shader->programId, "material.hasBaseTexture", 0);
     }
