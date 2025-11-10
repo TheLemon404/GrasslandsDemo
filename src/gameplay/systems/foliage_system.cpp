@@ -15,7 +15,7 @@ void FoliageSystem::Start(entt::registry &registry) {
         TerrainComponent& terrainComponent = registry.get<TerrainComponent>(terrainEntity);
         FoliageComponent& foliageComponent = registry.get<FoliageComponent>(entity);
         InstancedMeshComponent& instancedMeshComponent = registry.get<InstancedMeshComponent>(entity);
-        instancedMeshComponent.mesh = Renderer::LoadMeshAsset(foliageComponent.meshFile + ".obj", foliageComponent.meshFile + ".mtl", true);
+        instancedMeshComponent.mesh = Renderer::LoadMeshAsset(foliageComponent.meshFile + ".obj", true);
         instancedMeshComponent.mesh.material.roughness = 1.0f;
         instancedMeshComponent.mesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.grassInstancedShader);
         instancedMeshComponent.mesh.cullBackface = false;

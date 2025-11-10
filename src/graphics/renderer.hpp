@@ -53,7 +53,6 @@ public:
 
     Shader opaqueLitShader;
     Shader opaqueLitInstancedShader;
-    Shader postpassShader;
     Shader fullscreenQuadShader;
     Shader terrainShader;
     Shader grassInstancedShader;
@@ -79,7 +78,7 @@ public:
     static void UploadShaderUniformInt(unsigned int programId, std::string uniformName, int value);
 
     static Mesh LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader);
-    static Mesh LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath, bool instanced, int asset = 0);
+    static Mesh LoadMeshAsset(std::string meshAssetPath, bool instanced, int asset = 0);
 
     static Framebuffer CreateFramebuffer(int width, int height);
     static Framebuffer CreateShadowMapFramebuffer(int width, int height);

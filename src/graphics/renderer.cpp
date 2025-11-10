@@ -111,10 +111,8 @@ Mesh Renderer::LoadMeshSubAsset(int subMeshIndex, tinyobj::ObjReader& reader) {
     return result;
 }
 
-Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, std::string materialAssetPath, bool instanced, int asset) {
+Mesh Renderer::LoadMeshAsset(std::string meshAssetPath, bool instanced, int asset) {
     tinyobj::ObjReaderConfig reader_config;
-    reader_config.mtl_search_path = materialAssetPath.c_str();
-
     tinyobj::ObjReader reader;
 
     if (!reader.ParseFromFile(meshAssetPath.c_str(), reader_config)) {
@@ -322,7 +320,6 @@ ComputeShader Renderer::CreateComputeShader(std::string computeShaderLocalPath) 
 void Renderer::ReloadShaders() {
     ReloadShader(opaqueLitShader);
     ReloadShader(opaqueLitInstancedShader);
-    ReloadShader(postpassShader);
     ReloadShader(fullscreenQuadShader);
     ReloadShader(terrainShader);
     ReloadShader(grassInstancedShader);
@@ -746,7 +743,6 @@ void Renderer::Initialize() {
     std::shared_ptr<Application> app = Application::Get();
     opaqueLitInstancedShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
     opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
-    postpassShader = CreateShader("resources/shaders/postpass.vert", "resources/shaders/postpass.frag");
     fullscreenQuadShader = CreateShader("resources/shaders/fullscreen_quad.vert", "resources/shaders/fullscreen_quad.frag");
     terrainShader = CreateShader("resources/shaders/terrain.vert", "resources/shaders/terrain.frag", "resources/shaders/terrain.tesc", "resources/shaders/terrain.tese");
     grassInstancedShader = CreateShader("resources/shaders/grass_instanced.vert", "resources/shaders/grass_instanced.frag");
@@ -798,8 +794,8 @@ void Renderer::DrawActiveScene() {
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::mat4 lightView = glm::lookAt(lightPos, lightTarget, up);
 
-    DrawShadowMapObjects(lightView, lightProjection);
-    DrawInstancedShadowMapObjects(lightView, lightProjection);
+    if(drawRegularMeshes) DrawShadowMapObjects(lightView, lightProjection);
+    if(drawInstancedMeshes) DrawInstancedShadowMapObjects(lightView, lightProjection);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -817,8 +813,8 @@ void Renderer::DrawActiveScene() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    DrawObjects(lightView, lightProjection);
-    DrawInstancedObjects(lightView, lightProjection);
+    if(drawRegularMeshes) DrawObjects(lightView, lightProjection);
+    if(drawInstancedMeshes) DrawInstancedObjects(lightView, lightProjection);
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -851,7 +847,6 @@ void Renderer::DrawActiveScene() {
 void Renderer::CleanUp() {
     DeleteShader(opaqueLitShader);
     DeleteShader(opaqueLitInstancedShader);
-    DeleteShader(postpassShader);
     DeleteShader(fullscreenQuadShader);
     DeleteShader(terrainShader);
 }

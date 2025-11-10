@@ -51,7 +51,7 @@ struct GraphicsDemoScene : Scene {
         entt::entity rocks = registry.create();
         TransformComponent& rockTransformComponent = registry.emplace<TransformComponent>(rocks, TransformComponent(terrain));
         InstancedMeshComponent& instancedRocks = registry.emplace<InstancedMeshComponent>(rocks);
-        instancedRocks.mesh = Renderer::LoadMeshAsset("resources/meshes/rocks.obj", "resources/meshes/rocks.mtl", true);
+        instancedRocks.mesh = Renderer::LoadMeshAsset("resources/meshes/rocks.obj", true);
         instancedRocks.mesh.material.roughness = 0.5f;
         instancedRocks.mesh.material.albedo = glm::vec3(0.58f, 0.63f, 0.70f);
         instancedRocks.mesh.material.shadowColor = glm::vec3(0.42f, 0.48f, 0.54f);
@@ -62,7 +62,7 @@ struct GraphicsDemoScene : Scene {
         entt::entity treeStumps = registry.create();
         TransformComponent& treeStumpsTransformComponent = registry.emplace<TransformComponent>(treeStumps, TransformComponent(terrain));
         InstancedMeshComponent& instancedTreeStumps = registry.emplace<InstancedMeshComponent>(treeStumps);
-        instancedTreeStumps.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", "resources/meshes/tree.mtl", true);
+        instancedTreeStumps.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", true);
         instancedTreeStumps.mesh.material.roughness = 0.8f;
         instancedTreeStumps.mesh.material.albedo = glm::vec3(0.66f, 0.52f, 0.34f);
         instancedTreeStumps.mesh.material.shadowColor = glm::vec3(0.42f, 0.33f, 0.20f);
@@ -71,7 +71,7 @@ struct GraphicsDemoScene : Scene {
         entt::entity trees = registry.create();
         TransformComponent& treesTransformComponent = registry.emplace<TransformComponent>(trees, TransformComponent(terrain));
         InstancedMeshComponent& instancedTrees = registry.emplace<InstancedMeshComponent>(trees);
-        instancedTrees.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", "resources/meshes/tree.mtl", true, 1);
+        instancedTrees.mesh = Renderer::LoadMeshAsset("resources/meshes/tree.obj", true, 1);
         instancedTrees.mesh.cullBackface = false;
         instancedTrees.mesh.material.roughness = 1.0f;
         instancedTrees.mesh.material.applyWind = true;
@@ -83,7 +83,7 @@ struct GraphicsDemoScene : Scene {
         entt::entity tree2 = registry.create();
         TransformComponent& tree2TransformComponent = registry.emplace<TransformComponent>(tree2, TransformComponent(terrain));
         InstancedMeshComponent& instancedTree2 = registry.emplace<InstancedMeshComponent>(tree2);
-        instancedTree2.mesh = Renderer::LoadMeshAsset("resources/meshes/tree2.obj", "resources/meshes/tree2.mtl", true);
+        instancedTree2.mesh = Renderer::LoadMeshAsset("resources/meshes/tree2.obj", true);
         instancedTree2.mesh.material.roughness = 0.8f;
         instancedTree2.mesh.material.applyWind = true;
         instancedTree2.mesh.material.albedo = glm::vec3(0.68f, 0.88f, 0.52f);
@@ -101,12 +101,40 @@ struct GraphicsDemoScene : Scene {
         entt::entity tree2Stumps = registry.create();
         registry.emplace<TransformComponent>(tree2Stumps, TransformComponent(terrain));
         InstancedMeshComponent& instancedTree2Stumps = registry.emplace<InstancedMeshComponent>(tree2Stumps);
-        instancedTree2Stumps.mesh = Renderer::LoadMeshAsset("resources/meshes/tree2.obj", "resources/meshes/tree2.mtl", true, 1);
+        instancedTree2Stumps.mesh = Renderer::LoadMeshAsset("resources/meshes/tree2.obj", true, 1);
         instancedTree2Stumps.mesh.cullBackface = false;
         instancedTree2Stumps.mesh.material.roughness = 1.0f;
         instancedTree2Stumps.mesh.material.albedo = glm::vec3(0.66f, 0.52f, 0.34f);
         instancedTree2Stumps.mesh.material.shadowColor = glm::vec3(0.42f, 0.33f, 0.20f);
         instancedTree2Stumps.transforms = instancedTree2.transforms;
+
+        //material demo
+        entt::entity woodSphere = registry.create();
+        TransformComponent& transformComponent = registry.emplace<TransformComponent>(woodSphere, TransformComponent(terrain));
+        transformComponent.transform.position.y = 10.0f;
+        MeshComponent& meshComponent = registry.emplace<MeshComponent>(woodSphere);
+        meshComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/demo_material_sphere.obj", false);
+        meshComponent.mesh.material.roughness = 1.0f;
+        meshComponent.mesh.material.albedo = glm::vec3(0.66f, 0.52f, 0.34f);
+        meshComponent.mesh.material.shadowColor = glm::vec3(0.42f, 0.33f, 0.20f);
+
+        entt::entity metalSphere = registry.create();
+        TransformComponent& transformMComponent = registry.emplace<TransformComponent>(metalSphere, TransformComponent(terrain));
+        transformMComponent.transform.position = glm::vec3(15.0f, 10.0f, 0.0f);
+        MeshComponent& meshMComponent = registry.emplace<MeshComponent>(metalSphere);
+        meshMComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/demo_material_sphere.obj", false);
+        meshMComponent.mesh.material.roughness = 0.2f;
+        meshMComponent.mesh.material.albedo = glm::vec3(0.612f);
+        meshMComponent.mesh.material.shadowColor = glm::vec3(0.259f);
+
+        entt::entity metalBSphere = registry.create();
+        TransformComponent& transformBComponent = registry.emplace<TransformComponent>(metalBSphere, TransformComponent(terrain));
+        transformBComponent.transform.position = glm::vec3(30.0f, 10.0f, 0.0f);
+        MeshComponent& meshBComponent = registry.emplace<MeshComponent>(metalBSphere);
+        meshBComponent.mesh = Renderer::LoadMeshAsset("resources/meshes/demo_material_sphere.obj", false);
+        meshBComponent.mesh.material.roughness = 0.6f;
+        meshBComponent.mesh.material.albedo = glm::vec3(0.388f, 0.694f, 1.0f);
+        meshBComponent.mesh.material.shadowColor = glm::vec3(0.157f, 0.259f, 0.361f);
 
         //add all the needed systems to our scene
         systems.push_back(std::make_unique<CameraSystem>());

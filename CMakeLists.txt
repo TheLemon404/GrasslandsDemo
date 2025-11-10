@@ -22,9 +22,6 @@ add_executable(GrasslandsDemo
         submodules/imgui/backends/imgui_impl_opengl3.cpp
         submodules/imgui/backends/imgui_impl_opengl3.h
         external/glad/src/glad.c
-        src/gameplay/components/foliage_component.hpp
-        src/gameplay/systems/foliage_system.hpp
-        src/gameplay/systems/foliage_system.cpp
 )
 
 target_include_directories(GrasslandsDemo PRIVATE external/glad/include submodules/glm/glm submodules/imgui)

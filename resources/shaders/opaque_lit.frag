@@ -29,28 +29,28 @@ void main() {
         color = vec4(material.albedo, 1.0f);
     }
 
-    vec3 warmSun = vec3(1.05, 0.95, 0.82); // subtle warm tint
+    vec3 warmSun = vec3(1.01, 0.95, 0.9); // subtle warm tint
     vec3 coolSky = vec3(0.60, 0.75, 0.90); // slightly more saturated blue
 
     float depth = distance(cameraPosition, pPosition);
 
-    float diffuseStrength = 0.5 + 0.5 * max(dot(pNormal, normalize(-sunDirection)), 0.0);
-    vec3 diffuse = mix(coolSky, warmSun, diffuseStrength) * 0.9;
+    float diffuseStrength = max(dot(pNormal, normalize(-sunDirection)), 0.0);
+    vec3 diffuse = mix(coolSky * material.shadowColor, warmSun, diffuseStrength) * 0.9;
 
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
 
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 8.0);
-    vec3 finalSpecular = (1.0 - material.roughness) * spec * warmSun * 0.25;
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 2.0);
+    vec3 finalSpecular = (1.0 - material.roughness) * spec * warmSun;
 
     float shadow = 0.0;
     if (receivesShadow != 0) {
-        shadow = shadowCalculation(pNormal);
+        shadow = shadowCalculation(pNormal) * diffuseStrength;
     }
     shadow = pow(shadow, 0.6);
 
-    vec3 ambient = mix(coolSky * 0.6, warmSun * 0.4, 0.4);
-    vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * diffuse + ambient * 0.45;
+    vec3 ambient = mix(coolSky * 0.6, warmSun * 0.4, 0.4) * 0.45;
+    vec3 lighting = mix(material.shadowColor * coolSky, color.rgb * warmSun, (1.0 - shadow)) * (diffuse + finalSpecular + ambient);
     fragColor = vec4(lighting, 1.0f);
 
     gl_FragDepth = gl_FragCoord.z;

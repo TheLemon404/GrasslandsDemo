@@ -1,0 +1,13 @@
+# Blender 4.5.2 LTS MTL File: 'demo_material_sphere.blend'
+# www.blender.org
+
+newmtl lambert3SG
+Ns 100.000015
+Ka 1.000000 1.000000 1.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/Users/Osprey/Downloads/material-ball-in-3d-coat/source/143634405384.zip/export3dcoat_lambert3SG_color.tga
+map_Ks C:/Users/Osprey/Downloads/material-ball-in-3d-coat/source/143634405384.zip/export3dcoat_lambert3SG_gloss.tga
+map_Bump C:/Users/Osprey/Downloads/material-ball-in-3d-coat/source/143634405384.zip/export3dcoat_lambert3SG_nmap.tga
