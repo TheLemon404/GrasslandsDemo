@@ -51,6 +51,7 @@ public:
 
     static void CreateMeshBuffers(Mesh& mesh);
 
+    Shader skyboxShader;
     Shader opaqueLitShader;
     Shader opaqueLitInstancedShader;
     Shader fullscreenQuadShader;

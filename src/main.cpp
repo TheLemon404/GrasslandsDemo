@@ -25,12 +25,7 @@ int main() {
         app->scene.Update();
         app->scene.environment.sunDirection = glm::rotateY(app->scene.environment.sunDirection, 0.1f * (float)app->clock.deltaTime);
 
-        if (quilIsKeyPressed(GLFW_KEY_X)) {
-            app->renderer.showShadowMapDebug = !app->renderer.showShadowMapDebug;
-        }
-
         app->renderer.DrawActiveScene();
-
         DebugLayer::DrawDebugGUI();
 
         quilPollCallbacks();

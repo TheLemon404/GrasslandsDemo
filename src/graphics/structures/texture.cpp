@@ -7,7 +7,7 @@
 
 Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool repeat, bool pointFilter) {
     Texture texture = {
-        .nrChannels = textureFormat,
+        .numChannels = textureFormat,
     };
 
     glGenTextures(1, &texture.id);
@@ -29,18 +29,18 @@ Texture Texture::LoadTextureFromFile(const char *path, int textureFormat, bool r
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }
 
-    unsigned char *data = stbi_load(path, &texture.width, &texture.height, &texture.nrChannels, 0);
+    unsigned char *data = stbi_load(path, &texture.width, &texture.height, &texture.numChannels, 0);
     if (data)
     {
         GLenum format;
-        if (texture.nrChannels == 1)
+        if (texture.numChannels == 1)
             format = GL_RED;
-        else if (texture.nrChannels == 3)
+        else if (texture.numChannels == 3)
             format = GL_RGB;
-        else if (texture.nrChannels == 4)
+        else if (texture.numChannels == 4)
             format = GL_RGBA;
         else {
-            Application::Get()->logger.Log("Unsupported number of channels: " + std::to_string(texture.nrChannels));
+            Application::Get()->logger.Log("Unsupported number of channels: " + std::to_string(texture.numChannels));
             stbi_image_free(data);
             return texture;
         }
