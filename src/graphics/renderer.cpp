@@ -318,6 +318,7 @@ ComputeShader Renderer::CreateComputeShader(std::string computeShaderLocalPath) 
 }
 
 void Renderer::ReloadShaders() {
+    ReloadShader(skyboxShader);
     ReloadShader(opaqueLitShader);
     ReloadShader(opaqueLitInstancedShader);
     ReloadShader(fullscreenQuadShader);
@@ -742,6 +743,7 @@ void Renderer::UploadTransformationDataUniforms(Mesh &mesh, glm::mat4 transform,
 
 void Renderer::Initialize() {
     std::shared_ptr<Application> app = Application::Get();
+    skyboxShader = CreateShader("resources/shaders/skybox.vert", "resources/shaders/skybox.frag");
     opaqueLitInstancedShader = CreateShader("resources/shaders/opaque_instanced_lit.vert", "resources/shaders/opaque_instanced_lit.frag");
     opaqueLitShader = CreateShader("resources/shaders/opaque_lit.vert", "resources/shaders/opaque_lit.frag");
     fullscreenQuadShader = CreateShader("resources/shaders/fullscreen_quad.vert", "resources/shaders/fullscreen_quad.frag");
@@ -773,7 +775,6 @@ void Renderer::DrawActiveScene() {
     std::shared_ptr<Application> app = Application::Get();
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
     //shadow pass
     glCullFace(GL_BACK);
@@ -806,7 +807,6 @@ void Renderer::DrawActiveScene() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClearColor(app->scene.environment.clearColor.r, app->scene.environment.clearColor.g, app->scene.environment.clearColor.b, 1.0f);
 
-
     if (drawWireframe) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
@@ -814,11 +814,34 @@ void Renderer::DrawActiveScene() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
+    if(app->scene.environment.skybox.cubemapTexture.totalWidth != 0 && app->scene.environment.skybox.cubemapTexture.totalHeight != 0) {
+        glDepthMask(GL_FALSE);
+        glDisable(GL_CULL_FACE);
+
+        glBindVertexArray(app->scene.environment.skybox.cubemapMesh.vao);
+        glEnableVertexAttribArray(0);
+
+        glUseProgram(app->scene.environment.skybox.cubemapMesh.material.shader->programId);
+
+        UploadShaderUniformMat4(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "projection", camera.projection);
+        UploadShaderUniformMat4(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "view",  glm::mat4(glm::mat3(camera.view)));
+        UploadShaderUniformInt(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "skybox", 0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, app->scene.environment.skybox.cubemapTexture.id);
+
+        glDrawElements(GL_TRIANGLES, app->scene.environment.skybox.cubemapMesh.indices.size(), GL_UNSIGNED_INT, 0);
+
+        glDisableVertexAttribArray(0);
+        glBindVertexArray(0);
+
+        glDepthMask(GL_TRUE);
+    }
+
     if(drawRegularMeshes) DrawObjects(lightView, lightProjection);
     if(drawInstancedMeshes) DrawInstancedObjects(lightView, lightProjection);
 
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
 
     if (showShadowMapDebug) {
         glBindVertexArray(fullscreenQuad.vao);

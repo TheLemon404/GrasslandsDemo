@@ -55,6 +55,13 @@ void DebugLayer::DrawDebugGUI() {
     if (ImGui::Button("Reload Application")) {
         shouldReloadApplication = true;
     }
+
+    for(int i = 1; i < 60; i++){
+        frameTimes[i - 1] = frameTimes[i];
+    }
+    frameTimes[59] = app->clock.deltaTime;
+
+    ImGui::PlotHistogram("Frame Times", frameTimes, 60, 0, "", 0.0f, 0.1f, ImVec2(0, 100));
     ImGui::Text("Delta Time: %lf", app->clock.deltaTime);
     ImGui::Text("FPS: %lf", 1.0 / app->clock.deltaTime);
     ImGui::End();

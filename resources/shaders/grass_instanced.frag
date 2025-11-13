@@ -52,12 +52,6 @@ void main() {
     float diffuseStrength = 0.5 + 0.5 * max(dot(pNormal, normalize(-sunDirection)), 0.0);
     vec3 diffuse = mix(coolSky, warmSun, diffuseStrength) * 0.9;
 
-    vec3 viewDirection = normalize(cameraPosition - pPosition);
-    vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
-
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), 8.0);
-    vec3 finalSpecular = warmSun * 0.25;
-
     float shadow = 0.0;
     if (receivesShadow != 0) {
         shadow = shadowCalculation(pNormal);

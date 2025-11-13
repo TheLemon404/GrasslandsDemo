@@ -36,7 +36,7 @@ void main()
     vec4 preCurvedWorldPosition = (grassTransformMatrices[gl_InstanceID] * vec4(aPosition, 1.0f));
     terrainSpaceUV = ((vec2(preCurvedWorldPosition.x, preCurvedWorldPosition.z) + terrainSpaceUVBounds) / (terrainSpaceUVBounds * 2.0));
 
-    float wind = texture(perlinTexture, terrainSpaceUV + vec2(time / 35)).r;
+    float wind = texture(perlinTexture, terrainSpaceUV + vec2(time / 15)).r;
     //the breeze factor ensures a psuedo random sway per grass blade
     float breeze = cos(time + preCurvedWorldPosition.x + preCurvedWorldPosition.z + 25 * random(preCurvedWorldPosition.xz));
     float breezeCurveAmount = aUV.y * breezeAmount + (breeze / 15);
