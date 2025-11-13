@@ -815,8 +815,7 @@ void Renderer::DrawActiveScene() {
     }
 
     if(app->scene.environment.skybox.cubemapTexture.totalWidth != 0 && app->scene.environment.skybox.cubemapTexture.totalHeight != 0) {
-        glDepthMask(GL_FALSE);
-        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
 
         glBindVertexArray(app->scene.environment.skybox.cubemapMesh.vao);
         glEnableVertexAttribArray(0);
@@ -835,7 +834,7 @@ void Renderer::DrawActiveScene() {
         glDisableVertexAttribArray(0);
         glBindVertexArray(0);
 
-        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 
     if(drawRegularMeshes) DrawObjects(lightView, lightProjection);
