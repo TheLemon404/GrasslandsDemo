@@ -1,5 +1,4 @@
 #include "./skybox.hpp"
-#include "cubemap.hpp"
 #include "../../application.hpp"
 #include <memory>
 #include <vector>
@@ -38,10 +37,9 @@ unsigned int skyboxIndices[] = {
     1, 0, 4
 };
 
-Skybox Skybox::LoadSkybox(const char* cubemapTextureAssetPath) {
+Skybox Skybox::LoadSkybox() {
     Skybox result = {};
 
-    result.cubemapTexture = Cubemap::LoadCubemapTextureFromFile(cubemapTextureAssetPath);
     result.cubemapMesh = Mesh();
     result.cubemapMesh.indices = std::vector<unsigned int>(std::begin(skyboxIndices), std::end(skyboxIndices));
     result.cubemapMesh.material.shader = std::make_shared<Shader>(Application::Get()->renderer.skyboxShader);

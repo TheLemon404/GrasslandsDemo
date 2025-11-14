@@ -32,6 +32,8 @@ class Renderer {
 
     Framebuffer shadowFramebuffer;
 
+    void DrawSkybox();
+
     void DrawShadowMapObjects(glm::mat4 lightView, glm::mat4 lightProjection);
     void DrawInstancedShadowMapObjects(glm::mat4 lightView, glm::mat4 lightProjection);
     void DrawObjects(glm::mat4 lightView, glm::mat4 lightProjection);

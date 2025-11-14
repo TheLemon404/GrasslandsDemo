@@ -480,6 +480,32 @@ Framebuffer Renderer::CreateShadowMapFramebuffer(int width, int height) {
     return framebuffer;
 }
 
+void Renderer::DrawSkybox() {
+    std::shared_ptr<Application> app = Application::Get();
+
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
+    glBindVertexArray(app->scene.environment.skybox.cubemapMesh.vao);
+    glEnableVertexAttribArray(0);
+
+    glUseProgram(app->scene.environment.skybox.cubemapMesh.material.shader->programId);
+
+    UploadShaderUniformMat4(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "projection", camera.projection);
+    UploadShaderUniformMat4(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "view",  glm::mat4(glm::mat3(camera.view)));
+    UploadShaderUniformVec3(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "groundColor", app->scene.environment.skybox.groundColor);
+    UploadShaderUniformVec3(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "horizonColor", app->scene.environment.skybox.horizonColor);
+    UploadShaderUniformVec3(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "skyColor", app->scene.environment.skybox.skyColor);
+
+    glDrawElements(GL_TRIANGLES, app->scene.environment.skybox.cubemapMesh.indices.size(), GL_UNSIGNED_INT, 0);
+
+    glDisableVertexAttribArray(0);
+    glBindVertexArray(0);
+
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void Renderer::DrawShadowMapObjects(glm::mat4 lightView, glm::mat4 lightProjection) {
     std::shared_ptr<Application> app = Application::Get();
     auto view = app->scene.registry.view<MeshComponent, TransformComponent>();
@@ -814,28 +840,7 @@ void Renderer::DrawActiveScene() {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    if(app->scene.environment.skybox.cubemapTexture.totalWidth != 0 && app->scene.environment.skybox.cubemapTexture.totalHeight != 0) {
-        glDisable(GL_DEPTH_TEST);
-
-        glBindVertexArray(app->scene.environment.skybox.cubemapMesh.vao);
-        glEnableVertexAttribArray(0);
-
-        glUseProgram(app->scene.environment.skybox.cubemapMesh.material.shader->programId);
-
-        UploadShaderUniformMat4(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "projection", camera.projection);
-        UploadShaderUniformMat4(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "view",  glm::mat4(glm::mat3(camera.view)));
-        UploadShaderUniformInt(app->scene.environment.skybox.cubemapMesh.material.shader->programId, "skybox", 0);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, app->scene.environment.skybox.cubemapTexture.id);
-
-        glDrawElements(GL_TRIANGLES, app->scene.environment.skybox.cubemapMesh.indices.size(), GL_UNSIGNED_INT, 0);
-
-        glDisableVertexAttribArray(0);
-        glBindVertexArray(0);
-
-        glEnable(GL_DEPTH_TEST);
-    }
+    DrawSkybox();
 
     if(drawRegularMeshes) DrawObjects(lightView, lightProjection);
     if(drawInstancedMeshes) DrawInstancedObjects(lightView, lightProjection);

@@ -51,6 +51,11 @@ void DebugLayer::DrawDebugGUI() {
         ImGui::InputFloat("Shadowmap Near Plane", &app->settings.shadowMapNearPlane);
         ImGui::InputFloat("Shadowmap Far Plane", &app->settings.shadowMapFarPlane);
     }
+    if(ImGui::CollapsingHeader("Visual Settings")){
+        ImGui::InputFloat3("Skybox: Sky Color", &app->scene.environment.skybox.skyColor[0]);
+        ImGui::InputFloat3("Skybox: Horizon Color", &app->scene.environment.skybox.horizonColor[0]);
+        ImGui::InputFloat3("Skybox: Ground Color", &app->scene.environment.skybox.groundColor[0]);
+    }
     int shouldReloadApplication = false;
     if (ImGui::Button("Reload Application")) {
         shouldReloadApplication = true;

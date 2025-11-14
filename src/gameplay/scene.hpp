@@ -37,7 +37,7 @@ struct Scene {
 
 struct GraphicsDemoScene : Scene {
     GraphicsDemoScene() {
-        environment.skybox = Skybox::LoadSkybox("resources/textures/skybox4.jpg");
+        environment.skybox = Skybox::LoadSkybox();
 
         entt::entity terrain = registry.create();
         registry.emplace<TransformComponent>(terrain);
