@@ -9,7 +9,8 @@ layout(location = 3) in vec4 fragPosLightSpace;
 layout(location = 4) in float opacity;
 
 uniform vec3 sunDirection;
-uniform vec3 sunColor;
+uniform vec3 warmSun;
+uniform vec3 coolSky;
 uniform vec3 cameraPosition;
 uniform sampler2D shadowMap;
 
@@ -23,7 +24,7 @@ void main() {
     vec4 color = vec4(1.0);
 
     if (material.hasBaseTexture == 1) {
-        color = texture(material.baseTexture, pUV);
+        color = vec4(material.albedo, 1.0f) * texture(material.baseTexture, pUV);
     }
     else {
         color = vec4(material.albedo, 1.0f);
@@ -31,16 +32,19 @@ void main() {
 
     float depth = distance(cameraPosition, pPosition);
 
-    vec3 diffuse = max(dot(pNormal, normalize(-sunDirection)), 0.0f) * sunColor;
+    float diffuseStrength = max(dot(pNormal, normalize(-sunDirection)), 0.0);
+    vec3 diffuse = mix(coolSky * material.shadowColor, warmSun, diffuseStrength) * 0.9;
 
     vec3 viewDirection = normalize(cameraPosition - pPosition);
     vec3 reflectDirection = reflect(normalize(sunDirection), pNormal);
-    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0f), 32);
-    vec3 finalSpecular = (1.0 - material.roughness) * spec * sunColor;
+
+    float spec = pow(max(dot(viewDirection, reflectDirection), 0.0), material.shininess);
+    vec3 finalSpecular = (1.0 - material.roughness) * spec * warmSun;
 
     float shadow = shadowCalculation(pNormal);
 
-    vec3 lighting = mix(material.shadowColor, color.rgb, (1.0 - shadow)) * (diffuse + finalSpecular);
+    vec3 ambient = mix(coolSky * 0.6, warmSun * 0.4, 0.4) * 0.45;
+    vec3 lighting = mix(material.shadowColor * coolSky, color.rgb * warmSun, (1.0 - shadow)) * (diffuse + finalSpecular + ambient);
     vec4 final = vec4(lighting, opacity);
     fragColor = final;
     gl_FragDepth = gl_FragCoord.z;

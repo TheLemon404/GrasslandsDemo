@@ -630,6 +630,8 @@ void Renderer::DrawObjects(glm::mat4 lightView, glm::mat4 lightProjection) {
 
         //upload environment data
         UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "warmSun", app->scene.environment.warmSun);
+        UploadShaderUniformVec3(mesh.material.shader->programId, "coolSky", app->scene.environment.coolSky);
         UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
 
         glActiveTexture(GL_TEXTURE1);
@@ -697,6 +699,8 @@ void Renderer::DrawInstancedObjects(glm::mat4 lightView, glm::mat4 lightProjecti
             //upload environment data
             UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)app->clock.time);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "warmSun", app->scene.environment.warmSun);
+            UploadShaderUniformVec3(mesh.material.shader->programId, "coolSky", app->scene.environment.coolSky);
             UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);

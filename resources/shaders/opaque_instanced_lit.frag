@@ -10,6 +10,8 @@ layout(location = 3) in vec4 fragPosLightSpace;
 uniform MaterialData material;
 
 uniform vec3 sunDirection;
+uniform vec3 warmSun;
+uniform vec3 coolSky;
 uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;
@@ -27,9 +29,6 @@ void main() {
     else {
         color = vec4(material.albedo, 1.0f);
     }
-
-    vec3 warmSun = vec3(1.01, 0.95, 0.9); // subtle warm tint
-    vec3 coolSky = vec3(0.60, 0.75, 0.90); // slightly more saturated blue
 
     float depth = distance(cameraPosition, pPosition);
 
