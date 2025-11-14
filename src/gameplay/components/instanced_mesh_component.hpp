@@ -7,6 +7,6 @@ struct InstancedMeshComponent {
     std::vector<glm::mat4> matrices;
     unsigned int instanceSSBO;
     unsigned int instanceVBO;
-    int ssboBinding = 1;
+    const int ssboBinding = 0;
     Mesh mesh;
 };

@@ -8,11 +8,11 @@
 #include "structures/framebuffer.hpp"
 #include "structures/shader.hpp"
 
-static Mesh fullscreenQuad = {
+static Mesh shadowMapDebugQuad = {
     .vertices = {
         {0.0f, 0.0f, 0.0f},   // 0
-         {1.0f, 0.0f, 0.0f},   // 1
-         {1.0f,  1.0f, 0.0f},   // 2
+        {1.0f, 0.0f, 0.0f},   // 1
+        {1.0f,  1.0f, 0.0f},   // 2
         {0.0f,  1.0f, 0.0f}    // 3
       },
     .uvs = {
@@ -20,8 +20,8 @@ static Mesh fullscreenQuad = {
         {1.0f, 0.0},  // 1
         {1.0f, 1.0f},  // 2
         {0.0f, 1.0f}  // 3
-  },
-  .indices = {
+    },
+    .indices = {
         0, 1, 2,
         2, 3, 0
     }

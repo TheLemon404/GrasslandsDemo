@@ -630,7 +630,6 @@ void Renderer::DrawObjects(glm::mat4 lightView, glm::mat4 lightProjection) {
 
         //upload environment data
         UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
-        UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.ambientColor);
         UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
 
         glActiveTexture(GL_TEXTURE1);
@@ -698,7 +697,6 @@ void Renderer::DrawInstancedObjects(glm::mat4 lightView, glm::mat4 lightProjecti
             //upload environment data
             UploadShaderUniformFloat(mesh.material.shader->programId, "time", (float)app->clock.time);
             UploadShaderUniformVec3(mesh.material.shader->programId, "sunDirection", app->scene.environment.sunDirection);
-            UploadShaderUniformVec3(mesh.material.shader->programId, "sunColor", app->scene.environment.ambientColor);
             UploadShaderUniformVec3(mesh.material.shader->programId, "cameraPosition", camera.position);
             glActiveTexture(GL_TEXTURE1);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
@@ -792,9 +790,9 @@ void Renderer::Initialize() {
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     //create default objects (fullscreen quad etc...)
-    CreateMeshBuffers(fullscreenQuad);
-    fullscreenQuad.material.texture.id = shadowFramebuffer.depthTexture.id;
-    fullscreenQuad.material.shader = std::make_shared<Shader>(app->renderer.fullscreenQuadShader);
+    CreateMeshBuffers(shadowMapDebugQuad);
+    shadowMapDebugQuad.material.texture.id = shadowFramebuffer.depthTexture.id;
+    shadowMapDebugQuad.material.shader = std::make_shared<Shader>(app->renderer.fullscreenQuadShader);
 }
 
 void Renderer::DrawActiveScene() {
@@ -812,11 +810,11 @@ void Renderer::DrawActiveScene() {
     float orthoSize = app->settings.orthoSize;
     float near_plane = app->settings.shadowMapNearPlane;
     float far_plane = app->settings.shadowMapFarPlane;
+
     glm::mat4 lightProjection = glm::ortho(-orthoSize, orthoSize, -orthoSize, orthoSize, near_plane, far_plane);
-    // place the light at some distance in the light direction behind the scene center
     glm::vec3 sceneCenter = glm::vec3(0.0f, 0.0f, 0.0f); // choose logical scene center or camera target
     glm::vec3 lightDir = glm::normalize(Application::Get()->scene.environment.sunDirection); // direction the sun shines
-    float lightDistance = 250.0f; // tune this so the light is sufficiently far out
+    const float lightDistance = 250.0f; // tune this so the light is sufficiently far out
     glm::vec3 lightPos = sceneCenter - lightDir * lightDistance; // position the light "behind" the scene
     glm::vec3 lightTarget = sceneCenter;
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -848,21 +846,21 @@ void Renderer::DrawActiveScene() {
     glDisable(GL_DEPTH_TEST);
 
     if (showShadowMapDebug) {
-        glBindVertexArray(fullscreenQuad.vao);
+        glBindVertexArray(shadowMapDebugQuad.vao);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(2);
-        glUseProgram(fullscreenQuad.material.shader->programId);
+        glUseProgram(shadowMapDebugQuad.material.shader->programId);
 
-        if (fullscreenQuad.material.texture.id != 0) {
-            UploadShaderUniformInt(fullscreenQuad.material.shader->programId, "hasBaseTexture", 1);
+        if (shadowMapDebugQuad.material.texture.id != 0) {
+            UploadShaderUniformInt(shadowMapDebugQuad.material.shader->programId, "hasBaseTexture", 1);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, shadowFramebuffer.depthTexture.id);
         }
         else {
-            UploadShaderUniformInt(fullscreenQuad.material.shader->programId, "hasBaseTexture", 0);
+            UploadShaderUniformInt(shadowMapDebugQuad.material.shader->programId, "hasBaseTexture", 0);
         }
 
-        glDrawElements(GL_TRIANGLES, fullscreenQuad.indices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, shadowMapDebugQuad.indices.size(), GL_UNSIGNED_INT, 0);
 
         glUseProgram(0);
         glDisableVertexAttribArray(0);

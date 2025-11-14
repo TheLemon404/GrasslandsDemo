@@ -26,7 +26,6 @@ void FoliageSystem::Start(entt::registry &registry) {
 
         const int numInstances = foliageComponent.chunkData.numInstancesPerAxis.x * foliageComponent.chunkData.numInstancesPerAxis.y;
 
-        instancedMeshComponent.ssboBinding = 0;
         glGenBuffers(1, &foliageComponent.instanceSSBO);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, foliageComponent.instanceSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::mat4) * numInstances, nullptr, GL_DYNAMIC_DRAW);

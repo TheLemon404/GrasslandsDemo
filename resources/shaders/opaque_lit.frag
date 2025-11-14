@@ -8,7 +8,6 @@ layout(location = 2) in vec2 pUV;
 layout(location = 3) in vec4 fragPosLightSpace;
 
 uniform vec3 sunDirection;
-uniform vec3 sunColor;
 uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;

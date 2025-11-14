@@ -35,12 +35,11 @@ struct Application {
         settings = Settings();
     }
 
-    bool Initialize() {
+    void Initialize() {
         if (!window.Initialize(1200, 800, "GrasslandsDemo")) {
-            return false;
+            logger.ThrowRuntimeError("Failed to initialize window");
         }
         renderer.Initialize();
-        return true;
     }
 
     void Reload() {

@@ -15,4 +15,3 @@ void Logger::ThrowRuntimeError(std::string message) {
     std::cout << "RUNTIME ERROR: ";
     throw std::runtime_error(message.c_str());
 }
-

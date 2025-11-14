@@ -2,16 +2,12 @@
 #include <memory>
 #include "application.hpp"
 #include "quil.h"
-#define GLM_ENABLE_EXPERIMENTAL
-#include "imgui.h"
 #include "debug/debug_layer.hpp"
-#include "gtx/rotate_vector.hpp"
 
 int main() {
     std::shared_ptr<Application> app = Application::Get();
-    if (!app->Initialize()) {
-        return -1;
-    }
+    app->Initialize();
+
     quilCreateWindowContext(app->window.glfwWindow);
 
     DebugLayer::Initialize(app->window.glfwWindow);
@@ -23,7 +19,6 @@ int main() {
         app->clock.Tick();
 
         app->scene.Update();
-        app->scene.environment.sunDirection = glm::rotateY(app->scene.environment.sunDirection, 0.1f * (float)app->clock.deltaTime);
 
         app->renderer.DrawActiveScene();
         DebugLayer::DrawDebugGUI();

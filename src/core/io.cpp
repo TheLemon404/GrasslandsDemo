@@ -1,5 +1,5 @@
 #include "io.hpp"
-
+#include "../application.hpp"
 #include <fstream>
 #include <iosfwd>
 #include <iostream>
@@ -19,12 +19,12 @@ const char* IO::LoadShaderFileContents(const char* localPath) {
         file.read (memblock, size);
         file.close();
         memblock[size] = '\0';
-        std::cout << "file " << localPath << " loaded" << std::endl;
+        Application::Get()->logger.Log("file " + std::string(localPath) + " loaded");
         text.assign(memblock);
     }
     else
     {
-        std::cout << "Unable to open file " << localPath << std::endl;
+        Application::Get()->logger.Log("Unable to open file " + std::string(localPath));
         exit(1);
     }
     return memblock;

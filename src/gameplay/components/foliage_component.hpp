@@ -6,10 +6,10 @@
 #include <string>
 
 struct ChunkData {
-    glm::ivec2 numInstancesPerAxis = glm::ivec2(750);
-    glm::ivec2 chunkDimensions = glm::ivec2(1000);
-    glm::ivec2 chunkCenterCutout = glm::ivec2(0);
-    float clipDistance = 1000.0f;
+    const glm::ivec2 numInstancesPerAxis = glm::ivec2(750);
+    const glm::ivec2 chunkDimensions = glm::ivec2(1000);
+    const glm::ivec2 chunkCenterCutout = glm::ivec2(0);
+    const float clipDistance = 1000.0f;
 };
 
 struct FoliageComponent {

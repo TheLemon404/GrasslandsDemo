@@ -17,7 +17,6 @@ uniform vec3 upperColor2;
 uniform MaterialData material;
 
 uniform vec3 sunDirection;
-uniform vec3 sunColor;
 uniform vec3 cameraPosition;
 uniform int receivesShadow;
 uniform sampler2D shadowMap;

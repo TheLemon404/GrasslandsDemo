@@ -3,7 +3,10 @@
 #include "../../application.hpp"
 #include "../components/mesh_component.hpp"
 #include "../components/terrain_component.hpp"
+#include "entt/entity/fwd.hpp"
 #include "glad/glad.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "gtx/rotate_vector.hpp"
 
 void TerrainSystem::Start(entt::registry& registry) {
     auto view = registry.view<MeshComponent, TerrainComponent>();
@@ -67,6 +70,10 @@ void TerrainSystem::Start(entt::registry& registry) {
         mesh.material.shadowColor = glm::vec3(0.294f, 0.388f, 0.267f); // cooler moss-gray shadow tone
         mesh.material.roughness = 1.0f;
     }
+}
+
+void TerrainSystem::Update(entt::registry& registry) {
+    Application::Get()->scene.environment.sunDirection = glm::rotateY(Application::Get()->scene.environment.sunDirection, 0.1f * (float)Application::Get()->clock.deltaTime);
 }
 
 void TerrainSystem::InsertDrawLogic(Mesh& mesh, entt::entity& entity) {
